@@ -225,15 +225,19 @@ def recognize_angles(output_file, rotate,  start_time, mp_drawing, mp_pose, calc
     image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
     image_height, image_width, _ = image.shape
 
-    image.flags.writeable = True
+
+    image.flags.writeable = False
     results = pose.process(image)
+    image.flags.writeable = True
+
     eyesVisible = False
     shoulderVisible = True
 
-    # If no pose detected: return the image safely
+    # If no pose detected, return safe image
     if results.pose_landmarks is None:
-        return image
-            # code for pose extraction
+        safe = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
+        safe = cv2.resize(safe, (0,0), fx=0.4, fy=0.4)
+        return safe
 
     landmarks = results.pose_landmarks.landmark
 
@@ -486,7 +490,7 @@ def main():
     run_streamlit = check_streamlit()
     if run_streamlit:
         st.header("Handstandanalyzer")
-        st.write("version 131225-1209")
+        st.write("version 131225-1221")
 
         detection_confidence = st.sidebar.number_input("Detection confidence",0.0,1.0,0.5) 
         tracking_confidence =  st.sidebar.number_input("Tracking confidence",0.0,1.0,0.5) 
