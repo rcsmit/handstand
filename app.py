@@ -274,9 +274,11 @@ def run(run_streamlit, stframe, filetype, input_file, output_file, detection_con
                     drawing_spec, drawing_spec_points, rotate
                 )
                 
-                # Display in Streamlit
+                # Display in Streamlit with delay for video playback
                 if run_streamlit:
-                    stframe.image(final_frame, channels="BGR")
+                    stframe.image(final_frame, channels="BGR", use_container_width=True)
+                    # Add small delay to simulate video playback
+                    time.sleep(0.03)  # ~30fps display rate
                 
                 # Free memory every 10 frames
                 if processed_count % 10 == 0:
@@ -345,7 +347,7 @@ def main():
         st.set_page_config(page_title="Handstand Analyzer", page_icon="🤸")
         
         st.header("🤸 Handstand Analyzer")
-        st.write("**Cloud Run Edition** - version 131225-1400")
+        st.write("**Cloud Run Edition** - version 131225-1400b")
         
         # Show Cloud Run tips
         with st.expander("ℹ️ Cloud Run Optimizations"):
@@ -360,6 +362,14 @@ def main():
         detection_confidence = st.sidebar.number_input("Detection confidence", 0.0, 1.0, 0.5) 
         tracking_confidence = st.sidebar.number_input("Tracking confidence", 0.0, 1.0, 0.5) 
         rotate = st.sidebar.checkbox("Rotate 180°", False)
+        
+        # Processing mode
+        processing_mode = st.sidebar.radio(
+            "Processing mode",
+            ["🎬 Live Preview (slower)", "⚡ Batch Process (faster)"],
+            index=1
+        )
+        show_live = processing_mode.startswith("🎬")
         
         f = st.file_uploader("Upload file (mp4 or jpg)", ['mp4', "jpg", "jpeg"])
         
