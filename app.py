@@ -226,7 +226,7 @@ def recognize_angles(output_file, rotate,  start_time, mp_drawing, mp_pose, calc
     image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
     image_height, image_width, _ = image.shape
 
-    image.flags.writeable = False
+    image.flags.writeable = True
     results = pose.process(image)
     eyesVisible = False
     shoulderVisible = True
