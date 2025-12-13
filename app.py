@@ -195,6 +195,7 @@ def run(run_streamlit, stframe, filetype, input_file, output_file, detection_con
             #     stframe = st.empty()
             # else:
             image = cv2.imread(input_file)
+            image = np.ascontiguousarray(image.copy())
             out = None
 
             
@@ -530,4 +531,5 @@ def main():
     run(run_streamlit, stframe, filetype, input_file, output_file, detection_confidence, tracking_confidence, complexity, rotate)
 
 if __name__=='__main__':
+    st.write("131225 1138")
     main()
