@@ -501,7 +501,7 @@ def run(run_streamlit, stframe, filetype, input_file, output_file, detection_con
                 
                 # Angle details
                 with st.expander("🔢 Average Angles"):
-                    cols = st.columns(2)
+                    cols = st.columns(3)
                     with cols[0]:
                         st.write("**Left Side:**")
                         st.write(f"Shoulder: {avg_angles['left_shoulder']:.1f}° (ideal: 180°)")
@@ -514,6 +514,12 @@ def run(run_streamlit, stframe, filetype, input_file, output_file, detection_con
                         st.write(f"Elbow: {avg_angles['right_elbow']:.1f}° (ideal: 180°)")
                         st.write(f"Hip: {avg_angles['right_hip']:.1f}° (ideal: 180°)")
                         st.write(f"Knee: {avg_angles['right_knee']:.1f}° (ideal: 180°)")
+                    with cols[2]:
+                        st.write("**Weight factor**")
+                        st.write(f"Shoulder: {WEIGHTS['shoulder']}")
+                        st.write(f"Elbow: {WEIGHTS['elbow']}")
+                        st.write(f"Hip: {WEIGHTS['hip']}")
+                        st.write(f"Knee: {WEIGHTS['knee']}")
             
             # Show final frame and download button
             if run_streamlit:
@@ -687,7 +693,7 @@ def main():
         st.set_page_config(page_title="Handstand Analyzer", page_icon="🤸")
         
         st.header("🤸 Handstand Analyzer")
-        st.write("**Cloud Run Edition** - version 131225e")
+        st.write("**Cloud Run Edition** - version 131225f")
         
         # Show Cloud Run tips
         with st.expander("ℹ️ How it works"):
