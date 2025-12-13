@@ -145,8 +145,8 @@ def run(run_streamlit, stframe, filetype, input_file, output_file, detection_con
             static_image_mode=True, 
             min_detection_confidence=detection_confidence,         
             min_tracking_confidence=tracking_confidence,         
-            #model_complexity=complexity,    
-            model_complexity=0,   # 0 = light model     
+            model_complexity=complexity,    
+            #model_complexity=0,   # 0 = light model     
             smooth_landmarks=True,     ) as pose:
             
             while vid.isOpened():
@@ -175,9 +175,8 @@ def run(run_streamlit, stframe, filetype, input_file, output_file, detection_con
     elif filetype =="image":
         
 
-        with mp_pose.Pose( model_complexity=0,   # 0 = light model
-                            static_image_mode=True,
-                            #model_complexity=2,
+        with mp_pose.Pose( static_image_mode=True,
+                            model_complexity=2,
                             enable_segmentation=True,
                             min_detection_confidence=0.5) as pose:
             # if run_streamlit:
@@ -483,8 +482,12 @@ def right(s, amount):
     return s[-amount:]
 def main():
     
+    
     run_streamlit = check_streamlit()
     if run_streamlit:
+        st.header("Handstandanalyzer")
+        st.write("version 131225-1209")
+
         detection_confidence = st.sidebar.number_input("Detection confidence",0.0,1.0,0.5) 
         tracking_confidence =  st.sidebar.number_input("Tracking confidence",0.0,1.0,0.5) 
         complexity = st.sidebar.selectbox("Complexity", [0,1,2], index=1)
@@ -534,5 +537,5 @@ def main():
     run(run_streamlit, stframe, filetype, input_file, output_file, detection_confidence, tracking_confidence, complexity, rotate)
 
 if __name__=='__main__':
-    st.write("131225 1201")
+    
     main()
