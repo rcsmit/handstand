@@ -1,26 +1,7 @@
-FROM python:3.10-slim
+FROM gcr.io/handstandanalyzer/handstand-base
 
 WORKDIR /app
-
-# Install system dependencies for OpenCV
-RUN apt-get update && apt-get install -y \
-    libgl1 \
-    libglib2.0-0 \
-    libgtk-3-0 \
-    libgomp1 \
-    libsm6 \
-    libxext6 \
-    libxrender-dev \
-    libfontconfig1 \
-    && rm -rf /var/lib/apt/lists/*
-
-# Copy and install Python requirements
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
-
-# Copy app
 COPY . .
 
-EXPOSE 7860
-
-CMD ["streamlit", "run", "app.py", "--server.port=7860", "--server.address=0.0.0.0", "--server.headless=true"]
+EXPOSE 8080
+CMD ["streamlit", "run", "app.py", "--server.port=8080", "--server.address=0.0.0.0"]
