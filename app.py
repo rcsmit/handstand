@@ -456,13 +456,9 @@ def run(run_streamlit, stframe, filetype, input_file, output_file, detection_con
                 with col2:
                     st.metric("Symmetry Score", f"{symmetry_score:.1f}/100")
                 with col3:
-<<<<<<< HEAD
                     # combined = (total_score * 0.7 + symmetry_score * 0.3)
                     combined = (total_score * COMBINED_FACTOR + symmetry_score * (1-COMBINED_FACTOR))
                     
-=======
-                    combined = (total_score * COMBINED_FACTOR + symmetry_score * (1-COMBINED_FACTOR))
->>>>>>> 3dc0149327b850c90a577767dfd2a87e36cebbf3
                     st.metric("Overall Score", f"{combined:.1f}/100")
                 
                 # Grade
