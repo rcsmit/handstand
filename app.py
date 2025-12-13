@@ -423,7 +423,7 @@ def main():
         f = st.file_uploader("Upload file (mp4 or jpg)", ['mp4', "jpg", "jpeg"])
         
         if f is None:
-            st.info("👆 Please upload a video or image file")
+            st.info("👆 Please upload a video (max 10 seconds!) or image file")
             st.stop()
         
         file_name = f.name
