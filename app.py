@@ -231,6 +231,9 @@ def recognize_angles(output_file, rotate,  start_time, mp_drawing, mp_pose, calc
     eyesVisible = False
     shoulderVisible = True
 
+    # If no pose detected: return the image safely
+    if results.pose_landmarks is None:
+        return image
             # code for pose extraction
 
     landmarks = results.pose_landmarks.landmark
