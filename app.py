@@ -206,7 +206,7 @@ def process_frame(image, pose, mp_pose, mp_drawing, drawing_spec, drawing_spec_p
         # Force garbage collection
         gc.collect()
 
-def run(run_streamlit, stframe, filetype, input_file, output_file, detection_confidence, tracking_confidence, complexity, rotate):
+def run(run_streamlit, stframe, filetype, input_file, output_file, detection_confidence, tracking_confidence, complexity, rotate, show_live=True):
     
     mp_pose, mp_drawing = setup_mediapipe()
     
@@ -233,6 +233,14 @@ def run(run_streamlit, stframe, filetype, input_file, output_file, detection_con
         
         st.warning(f"⚠️ Cloud Run mode: Processing max {max_frames} frames (every {SKIP_FRAMES}th frame)")
         st.info(f"Video: {width}x{height}, {fps} fps, {total_frames} total frames")
+        
+        # Create output video file
+        output_path = '/tmp/output_video.mp4'
+        output_width = int(width * RESIZE_FACTOR * 0.5)  # Display size
+        output_height = int(height * RESIZE_FACTOR * 0.5)
+        fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+        video_writer = cv2.VideoWriter(output_path, fourcc, fps // SKIP_FRAMES, 
+                                       (output_width, output_height))
         
         # Create progress bar
         progress_bar = st.progress(0)
@@ -274,19 +282,54 @@ def run(run_streamlit, stframe, filetype, input_file, output_file, detection_con
                     drawing_spec, drawing_spec_points, rotate
                 )
                 
-                # Display in Streamlit with delay for video playback
-                if run_streamlit:
+                # Write to output video
+                video_writer.write(final_frame)
+                
+                # Display in Streamlit (only show every 5th frame to reduce load)
+                if run_streamlit and show_live and processed_count % 5 == 0:
                     stframe.image(final_frame, channels="BGR", use_container_width=True)
-                    # Add small delay to simulate video playback
-                    time.sleep(0.03)  # ~30fps display rate
+                    time.sleep(0.01)
+                
+                # Store last frame for batch mode
+                last_frame = final_frame
                 
                 # Free memory every 10 frames
                 if processed_count % 10 == 0:
                     gc.collect()
             
             vid.release()
+            video_writer.release()
             progress_bar.progress(1.0)
             status_text.text(f"✅ Complete! Processed {processed_count} frames.")
+            
+            # Show final frame and download button
+            if run_streamlit:
+                st.subheader("📊 Results")
+                col1, col2 = st.columns(2)
+                
+                with col1:
+                    if 'last_frame' in locals():
+                        st.image(last_frame, channels="BGR", use_container_width=True, 
+                                caption="Sample frame with pose analysis")
+                
+                with col2:
+                    # Offer video download
+                    if os.path.exists(output_path):
+                        file_size = os.path.getsize(output_path) / (1024 * 1024)  # MB
+                        st.metric("Output video size", f"{file_size:.1f} MB")
+                        
+                        with open(output_path, 'rb') as f:
+                            st.download_button(
+                                label="📥 Download Analyzed Video",
+                                data=f,
+                                file_name=f"handstand_analysis_{int(time.time())}.mp4",
+                                mime="video/mp4",
+                                use_container_width=True
+                            )
+                        
+                        st.info("💡 Download the video to watch it with all analyzed frames!")
+                    else:
+                        st.error("Output video not created")
             
             # Final cleanup
             gc.collect()
@@ -347,16 +390,22 @@ def main():
         st.set_page_config(page_title="Handstand Analyzer", page_icon="🤸")
         
         st.header("🤸 Handstand Analyzer")
-        st.write("**Cloud Run Edition** - version 131225-1400b")
+        st.write("**Cloud Run Edition** - version 131225-1420c")
         
         # Show Cloud Run tips
-        with st.expander("ℹ️ Cloud Run Optimizations"):
+        with st.expander("ℹ️ How it works"):
             st.markdown("""
-            - ✅ Videos limited to 300 frames (~10 sec)
+            **This app analyzes your handstand form:**
+            1. Upload a video (MP4) or image (JPG)
+            2. AI detects your body pose
+            3. Calculates joint angles (shoulders, elbows, hips, knees)
+            4. Download the analyzed video with annotations
+            
+            **Cloud Run Optimizations:**
+            - ✅ Videos limited to 300 frames (~10 sec at 30fps)
             - ✅ Processing every 2nd frame
-            - ✅ Images resized to 50% for memory efficiency
-            - ✅ Using lightest MediaPipe model
-            - ℹ️ For longer videos, consider running locally or using Cloud Storage
+            - ✅ Reduced resolution for memory efficiency
+            - 💡 **Download the output video** to see all frames smoothly!
             """)
 
         detection_confidence = st.sidebar.number_input("Detection confidence", 0.0, 1.0, 0.5) 
@@ -387,6 +436,7 @@ def main():
         
         input_file = temp_path
         stframe = st.empty()
+        show_live = locals().get('show_live', True)
     else:
         detection_confidence = 0.5
         tracking_confidence = 0.5
@@ -411,7 +461,8 @@ def main():
     
     try:
         run(run_streamlit, stframe, filetype, input_file, output_file, 
-            detection_confidence, tracking_confidence, 0, rotate)
+            detection_confidence, tracking_confidence, 0, rotate, 
+            show_live if run_streamlit else True)
     except Exception as e:
         st.error(f"❌ Error during processing: {str(e)}")
         st.exception(e)
