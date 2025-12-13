@@ -5,7 +5,7 @@ import numpy as np
 
 st.set_page_config(page_title="Handstand Analyzer", page_icon="🤸", layout="wide")
 
-st.title("🤸 Handstand Analyzer")
+st.title("🤸 Handstand Analyzer v1")
 st.write("Upload a handstand image to analyze your form")
 
 mp_drawing = mp.solutions.drawing_utils
@@ -57,4 +57,5 @@ if uploaded_file:
             else:
                 st.error("❌ No pose detected. Try a clearer image.")
 else:
+
     st.info("👆 Upload an image to get started")
