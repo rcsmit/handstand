@@ -44,6 +44,8 @@ WEIGHTS = {
     'knee': 0.15       # Less critical
 }
 
+COMBINED_FACTOR = 0.85 #  combined = (total_score * COMBINED_FACTOR + symmetry_score * (1-COMBINED_FACTOR))                   
+
 def calculate_joint_score(actual_angle, ideal_angle):
     """Calculate score for a single joint (0-100)"""
     deviation = abs(actual_angle - ideal_angle)
@@ -454,7 +456,7 @@ def run(run_streamlit, stframe, filetype, input_file, output_file, detection_con
                 with col2:
                     st.metric("Symmetry Score", f"{symmetry_score:.1f}/100")
                 with col3:
-                    combined = (total_score * 0.7 + symmetry_score * 0.3)
+                    combined = (total_score * COMBINED_FACTOR + symmetry_score * (1-COMBINED_FACTOR))
                     st.metric("Overall Score", f"{combined:.1f}/100")
                 
                 # Grade
@@ -581,7 +583,9 @@ def run(run_streamlit, stframe, filetype, input_file, output_file, detection_con
                     with col2:
                         st.metric("Symmetry Score", f"{symmetry_score:.1f}/100")
                     with col3:
-                        combined = (total_score * 0.7 + symmetry_score * 0.3)
+                        #combined = (total_score * 0.7 + symmetry_score * 0.3)
+                        combined = (total_score * COMBINED_FACTOR + symmetry_score * (1-COMBINED_FACTOR))
+                    
                         st.metric("Overall Score", f"{combined:.1f}/100")
                     
                     # Grade
