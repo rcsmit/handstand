@@ -531,5 +531,5 @@ def main():
     run(run_streamlit, stframe, filetype, input_file, output_file, detection_confidence, tracking_confidence, complexity, rotate)
 
 if __name__=='__main__':
-    st.write("131225 1138")
+    st.write("131225 1144")
     main()
