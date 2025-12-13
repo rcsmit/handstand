@@ -589,15 +589,9 @@ def run(run_streamlit, stframe, filetype, input_file, output_file, detection_con
                     with col2:
                         st.metric("Symmetry Score", f"{symmetry_score:.1f}/100")
                     with col3:
-<<<<<<< HEAD
                         # combined = (total_score * 0.7 + symmetry_score * 0.3)
                         combined = (total_score * COMBINED_FACTOR + symmetry_score * (1-COMBINED_FACTOR))
                     
-=======
-                        #combined = (total_score * 0.7 + symmetry_score * 0.3)
-                        combined = (total_score * COMBINED_FACTOR + symmetry_score * (1-COMBINED_FACTOR))
-                    
->>>>>>> 3dc0149327b850c90a577767dfd2a87e36cebbf3
                         st.metric("Overall Score", f"{combined:.1f}/100")
                     
                     # Grade
@@ -640,7 +634,7 @@ def run(run_streamlit, stframe, filetype, input_file, output_file, detection_con
                     
                     # Angle details
                     with st.expander("🔢 Measured Angles"):
-                        cols = st.columns(2)
+                        cols = st.columns(3)
                         with cols[0]:
                             st.write("**Left Side:**")
                             st.write(f"Shoulder: {angles['left_shoulder']}° (ideal: 180°)")
@@ -653,6 +647,12 @@ def run(run_streamlit, stframe, filetype, input_file, output_file, detection_con
                             st.write(f"Elbow: {angles['right_elbow']}° (ideal: 180°)")
                             st.write(f"Hip: {angles['right_hip']}° (ideal: 180°)")
                             st.write(f"Knee: {angles['right_knee']}° (ideal: 180°)")
+                        with cols[2]:
+                            st.write("**Weight factor**")
+                            st.write(f"Shoulder: {WEIGHTS['shoulder']}")
+                            st.write(f"Elbow: {WEIGHTS['elbow']}")
+                            st.write(f"Hip: {WEIGHTS['hip']}")
+                            st.write(f"Knee: {WEIGHTS['knee']}")
                 
                 # Show image
                 st.subheader("📸 Analyzed Image")
@@ -691,7 +691,7 @@ def main():
         st.set_page_config(page_title="Handstand Analyzer", page_icon="🤸")
         
         st.header("🤸 Handstand Analyzer")
-        st.write("**Cloud Run Edition** - version 131225-1328d")
+        st.write("**Cloud Run Edition** - version 131225e")
         
         # Show Cloud Run tips
         with st.expander("ℹ️ How it works"):
