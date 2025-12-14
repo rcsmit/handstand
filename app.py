@@ -439,8 +439,8 @@ def run(run_streamlit, stframe, filetype, input_file, output_file, detection_con
         
         # Create output video file
         output_path = '/tmp/output_video.mp4'
-        output_width = int(width * RESIZE_FACTOR)  # Display size
-        output_height = int(height * RESIZE_FACTOR)
+        output_width = int(width * RESIZE_FACTOR *0.5)  # Display size
+        output_height = int(height * RESIZE_FACTOR*0.5)
         fourcc = cv2.VideoWriter_fourcc(*'mp4v')
         video_writer = cv2.VideoWriter(output_path, fourcc, fps // SKIP_FRAMES, 
                                        (output_width, output_height))
@@ -696,7 +696,7 @@ def main():
         st.set_page_config(page_title="Handstand Analyzer", page_icon="🤸")
         
         st.header("🤸 Handstand Analyzer")
-        st.write("**Cloud Run Edition** - version 141225b")
+        st.write("**Cloud Run Edition** - version 141225c")
         
         # Show Cloud Run tips
         with st.expander("ℹ️ How it works"):
