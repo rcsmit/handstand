@@ -338,7 +338,7 @@ def process_frame(image, pose, mp_pose, mp_drawing, drawing_spec, drawing_spec_p
         # Force garbage collection
         gc.collect()
 
-def show_feedback(angles):
+def show_feedback(angles, all_angles):
     total_score, form_scores = calculate_handstand_score(angles)
     #symmetry_score, symmetry_scores = calculate_symmetry_score(angles)
     feedback = generate_feedback(angles, form_scores) #, symmetry_scores)
@@ -403,8 +403,8 @@ def show_feedback(angles):
         st.write(tip)
     
     # Angle details
-    with st.expander("🔢 Measured Angles"):
-        cols = st.columns(3)
+    #with st.expander("🔢 Measured Angles"):
+    cols = st.columns(3)
         with cols[0]:
             st.write("**Left Side:**")
             st.write(f"Shoulder: {angles['left_shoulder']}° (ideal: 180°)")
@@ -423,6 +423,55 @@ def show_feedback(angles):
             st.write(f"Elbow: {WEIGHTS['elbow']}")
             st.write(f"Hip: {WEIGHTS['hip']}")
             st.write(f"Knee: {WEIGHTS['knee']}")
+    if all_angles:
+        # Create angle progression graphs
+        st.subheader("📈 Angle Progression Over Time")
+        
+        # Prepare data
+        frames = list(range(len(all_angles)))
+        
+        # Create figure with subplots for each joint
+        joints = ['shoulder', 'elbow', 'hip', 'knee']
+        
+        for joint in joints:
+            fig = go.Figure()
+            
+            # Left side
+            left_angles = [frame[f'left_{joint}'] for frame in all_angles]
+            fig.add_trace(go.Scatter(
+                x=frames, y=left_angles,
+                mode='lines+markers',
+                name=f'Left {joint}',
+                line=dict(color='blue', width=2)
+            ))
+            
+            # # Right side
+            # right_angles = [frame[f'right_{joint}'] for frame in all_angles]
+            # fig.add_trace(go.Scatter(
+            #     x=frames, y=right_angles,
+            #     mode='lines+markers',
+            #     name=f'Right {joint}',
+            #     line=dict(color='red', width=2)
+            # ))
+            
+            # Ideal line
+            fig.add_trace(go.Scatter(
+                x=[frames[0], frames[-1]], 
+                y=[180, 180],
+                mode='lines',
+                name='Ideal (180°)',
+                line=dict(color='green', width=2, dash='dash')
+            ))
+            
+            fig.update_layout(
+                title=f'{joint.capitalize()} Angle Over Time',
+                xaxis_title='Frame',
+                yaxis_title='Angle (degrees)',
+                yaxis_range=[140, 190],
+                hovermode='x unified'
+            )
+            
+            st.plotly_chart(fig, use_container_width=True)
 def run(run_streamlit, stframe, filetype, input_file, output_file, detection_confidence, tracking_confidence, complexity, rotate, show_live=True):
     
     mp_pose, mp_drawing = setup_mediapipe()
@@ -533,7 +582,7 @@ def run(run_streamlit, stframe, filetype, input_file, output_file, detection_con
                 avg_angles = {}
                 for key in all_angles[0].keys():
                     avg_angles[key] = sum(frame[key] for frame in all_angles) / len(all_angles)
-                show_feedback(avg_angles)
+                show_feedback(avg_angles, all_angles)
                
             
             # Show final frame and download button
@@ -592,7 +641,7 @@ def run(run_streamlit, stframe, filetype, input_file, output_file, detection_con
             if run_streamlit:
                 # Calculate scores
                 if angles:
-                    show_feedback(angles)
+                    show_feedback(angles, None)
                 
                 # Show image
                 st.subheader("📸 Analyzed Image")
@@ -631,7 +680,7 @@ def main():
         st.set_page_config(page_title="Handstand Analyzer", page_icon="🤸")
         
         st.header("🤸 Handstand Analyzer")
-        st.write("**Cloud Run Edition** - version 141225g")
+        st.write("**Cloud Run Edition** - version 141225h")
         
         # Show Cloud Run tips
         with st.expander("ℹ️ How it works"):
