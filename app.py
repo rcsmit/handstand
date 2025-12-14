@@ -54,10 +54,29 @@ def calculate_joint_score_lineair(actual_angle, ideal_angle):
     score = max(0, 100 - (deviation * 2))
     return score
 
+
+
 def calculate_joint_score(angle):
-    """Exact fit: 120→0, 150→70, 170≈95, 180→100"""
-    score = -0.0388889 * angle**2 + 13.1667 * angle - 940
-    return max(0, min(100, score))
+    # Clamp possible range
+    if angle < 120:
+        return 0
+    if angle > 180:
+        return 100
+
+    # 120 → 150  (0 → 70)
+    if angle <= 150:
+        return (angle - 120) * (70 / 30)  # slope = 70/30 ≈ 2.333
+
+    # 150 → 170 (70 → 95)
+    if angle <= 170:
+        return 70 + (angle - 150) * (25 / 20)  # slope = 1.25
+
+    # 170 → 175 (95 → 99)
+    if angle <= 175:
+        return 95 + (angle - 170) * (4 / 5)  # slope = 0.8
+
+    # 175 → 180 (99 → 100)
+    return 99 + (angle - 175) * (1 / 5)
 
 def calculate_handstand_score(angles):
     """
@@ -690,7 +709,7 @@ def main():
         st.set_page_config(page_title="Handstand Analyzer", page_icon="🤸")
         
         st.header("🤸 Handstand Analyzer")
-        st.write("**Cloud Run Edition** - version 141225j")
+        st.write("**Cloud Run Edition** - version 141225k")
         
         # Show Cloud Run tips
         with st.expander("ℹ️ How it works"):
