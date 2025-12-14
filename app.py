@@ -435,7 +435,7 @@ def show_feedback(angles, all_angles):
         
         # Create figure with subplots for each joint
         joints = ['shoulder', 'elbow', 'hip', 'knee']
-        with st.expander("Angles in time",  expanded=False)
+        with st.expander("Angles in time",  expanded=False):
             for joint in joints:
                 # fig = go.Figure()
                 
