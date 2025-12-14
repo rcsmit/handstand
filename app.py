@@ -581,7 +581,7 @@ def run(run_streamlit, stframe, filetype, input_file, output_file, detection_con
                 # Average angles across all frames
                 avg_angles = {}
                 for key in all_angles[0].keys():
-                    avg_angles[key] = sum(frame[key] for frame in all_angles) / len(all_angles)
+                    avg_angles[key] = round(sum(frame[key] for frame in all_angles) / len(all_angles),2)
                 show_feedback(avg_angles, all_angles)
                
             
@@ -680,7 +680,7 @@ def main():
         st.set_page_config(page_title="Handstand Analyzer", page_icon="🤸")
         
         st.header("🤸 Handstand Analyzer")
-        st.write("**Cloud Run Edition** - version 141225h")
+        st.write("**Cloud Run Edition** - version 141225i")
         
         # Show Cloud Run tips
         with st.expander("ℹ️ How it works"):
