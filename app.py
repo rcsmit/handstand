@@ -304,7 +304,7 @@ def process_frame(image, pose, mp_pose, mp_drawing, drawing_spec, drawing_spec_p
         angle_texts = [
             (f"knee: {angles['left_knee']}", left_knee),
             (f"hip: {angles['left_hip']}", left_hip),
-            (f"elbow: {angles['left_elbow']}", elbow_r),
+            (f"elbow: {angles['left_elbow']}", elbow),
             (f"shoulder: {angles['left_shoulder']}", shoulder),
         ]
         
@@ -627,7 +627,7 @@ def main():
         st.set_page_config(page_title="Handstand Analyzer", page_icon="🤸")
         
         st.header("🤸 Handstand Analyzer")
-        st.write("**Cloud Run Edition** - version 141225e")
+        st.write("**Cloud Run Edition** - version 141225f")
         
         # Show Cloud Run tips
         with st.expander("ℹ️ How it works"):
