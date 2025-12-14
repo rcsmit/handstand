@@ -13,6 +13,7 @@ import shutil
 from pathlib import Path
 import gc
 from collections import defaultdict
+import plotly.graph_objects as go
 
 # Force read-only model loading
 os.environ["MEDIAPIPE_DISABLE_GPU"] = "1"
@@ -184,15 +185,17 @@ def setup_mediapipe():
     
     return mp.solutions.pose, mp.solutions.drawing_utils
 
-def process_frame(image, pose, mp_pose, mp_drawing, drawing_spec, drawing_spec_points, rotate, return_angles=False):
+def process_frame(image, pose, mp_pose, mp_drawing, drawing_spec, drawing_spec_points, rotate, text_color, return_angles=False):
     """Process a single frame with memory optimization"""
     
     line_color = (255, 255, 255)
     line_color_r = (255, 0, 0)
     line_color_g = (0, 255, 0)
     line_color_b = (0, 0, 255)
-    text_color = (0, 0, 0)
-    
+    if text_color =="#FFFFFF":
+        text_color = (255, 255, 255)
+    else:
+        text_color = (0, 0, 0)
     try:
         # Resize to reduce memory usage
         h, w = image.shape[:2]
@@ -472,7 +475,7 @@ def show_feedback(angles, all_angles):
             )
             
             st.plotly_chart(fig, use_container_width=True)
-def run(run_streamlit, stframe, filetype, input_file, output_file, detection_confidence, tracking_confidence, complexity, rotate, show_live=True):
+def run(run_streamlit, stframe, filetype, input_file, output_file, detection_confidence, tracking_confidence, complexity, rotate, text_color, show_live=True):
     
     mp_pose, mp_drawing = setup_mediapipe()
     
@@ -548,7 +551,7 @@ def run(run_streamlit, stframe, filetype, input_file, output_file, detection_con
                 # Process frame
                 result = process_frame(
                     image, pose, mp_pose, mp_drawing, 
-                    drawing_spec, drawing_spec_points, rotate, return_angles=True
+                    drawing_spec, drawing_spec_points, rotate, text_color, return_angles=True
                 )
                 final_frame, frame_angles = result
                 
@@ -634,7 +637,7 @@ def run(run_streamlit, stframe, filetype, input_file, output_file, detection_con
             # Process image
             result = process_frame(
                 image, pose, mp_pose, mp_drawing,
-                drawing_spec, drawing_spec_points, rotate, return_angles=True
+                drawing_spec, drawing_spec_points, rotate, text_color, return_angles=True
             )
             final_frame, angles = result
             
@@ -680,7 +683,7 @@ def main():
         st.set_page_config(page_title="Handstand Analyzer", page_icon="🤸")
         
         st.header("🤸 Handstand Analyzer")
-        st.write("**Cloud Run Edition** - version 141225i")
+        st.write("**Cloud Run Edition** - version 141225j")
         
         # Show Cloud Run tips
         with st.expander("ℹ️ How it works"):
@@ -701,7 +704,7 @@ def main():
         detection_confidence = st.sidebar.number_input("Detection confidence", 0.0, 1.0, 0.5) 
         tracking_confidence = st.sidebar.number_input("Tracking confidence", 0.0, 1.0, 0.5) 
         rotate = st.sidebar.checkbox("Rotate 180°", False)
-        
+        text_color=st.sidebar.selectbox("Textcolor"["#FFFFFF", "#000000"])
         # Processing mode
         processing_mode = st.sidebar.radio(
             "Processing mode",
@@ -751,7 +754,7 @@ def main():
     
     try:
         run(run_streamlit, stframe, filetype, input_file, output_file, 
-            detection_confidence, tracking_confidence, 0, rotate, 
+            detection_confidence, tracking_confidence, 0, rotate, text_color,
             show_live if run_streamlit else True)
     except Exception as e:
         st.error(f"❌ Error during processing: {str(e)}")
