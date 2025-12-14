@@ -380,18 +380,22 @@ def show_feedback(angles):
     st.markdown(f"### :{grade_color}[{grade}]")
     
     # Detailed breakdown
-    with st.expander("📊 Detailed Breakdown", expanded=True):
-        col1, col2 = st.columns(2)
+    st.write("**Joint Scores:**")
+        for joint, score in form_scores.items():
+            st.progress(score/100, text=f"{joint.capitalize()}: {score:.0f}/100")
         
-        with col1:
-            st.write("**Joint Scores:**")
-            for joint, score in form_scores.items():
-                st.progress(score/100, text=f"{joint.capitalize()}: {score:.0f}/100")
+    # with st.expander("📊 Detailed Breakdown", expanded=True):
+    #     col1, col2 = st.columns(2)
         
-        with col2:
-            st.write("**Symmetry Scores:**")
-            for joint, score in symmetry_scores.items():
-                st.progress(score/100, text=f"{joint.capitalize()}: {score:.0f}/100")
+    #     with col1:
+    #         st.write("**Joint Scores:**")
+    #         for joint, score in form_scores.items():
+    #             st.progress(score/100, text=f"{joint.capitalize()}: {score:.0f}/100")
+        
+    #     with col2:
+    #         st.write("**Symmetry Scores:**")
+    #         for joint, score in symmetry_scores.items():
+    #             st.progress(score/100, text=f"{joint.capitalize()}: {score:.0f}/100")
     
     # Feedback
     st.subheader("💬 Feedback & Tips")
@@ -627,7 +631,7 @@ def main():
         st.set_page_config(page_title="Handstand Analyzer", page_icon="🤸")
         
         st.header("🤸 Handstand Analyzer")
-        st.write("**Cloud Run Edition** - version 141225f")
+        st.write("**Cloud Run Edition** - version 141225g")
         
         # Show Cloud Run tips
         with st.expander("ℹ️ How it works"):
