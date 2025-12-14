@@ -330,7 +330,7 @@ def process_frame(image, pose, mp_pose, mp_drawing, drawing_spec, drawing_spec_p
         # Force garbage collection
         gc.collect()
 
-def feedback(angles):
+def show_feedback(angles):
     total_score, form_scores = calculate_handstand_score(angles)
     symmetry_score, symmetry_scores = calculate_symmetry_score(angles)
     feedback = generate_feedback(angles, form_scores, symmetry_scores)
@@ -519,7 +519,7 @@ def run(run_streamlit, stframe, filetype, input_file, output_file, detection_con
                 avg_angles = {}
                 for key in all_angles[0].keys():
                     avg_angles[key] = sum(frame[key] for frame in all_angles) / len(all_angles)
-                feedback(avg_angles)
+                show_feedback(avg_angles)
                 if 1==2:
                     # Calculate scores
                     total_score, form_scores = calculate_handstand_score(avg_angles)
@@ -657,7 +657,7 @@ def run(run_streamlit, stframe, filetype, input_file, output_file, detection_con
             if run_streamlit:
                 # Calculate scores
                 if angles:
-                    feedback(angles)
+                    show_feedback(angles)
                 
                 # Show image
                 st.subheader("📸 Analyzed Image")
@@ -696,7 +696,7 @@ def main():
         st.set_page_config(page_title="Handstand Analyzer", page_icon="🤸")
         
         st.header("🤸 Handstand Analyzer")
-        st.write("**Cloud Run Edition** - version 141225a")
+        st.write("**Cloud Run Edition** - version 141225b")
         
         # Show Cloud Run tips
         with st.expander("ℹ️ How it works"):
