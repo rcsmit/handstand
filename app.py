@@ -706,7 +706,7 @@ def main():
         detection_confidence = st.sidebar.number_input("Detection confidence", 0.0, 1.0, 0.5) 
         tracking_confidence = st.sidebar.number_input("Tracking confidence", 0.0, 1.0, 0.5) 
         rotate = st.sidebar.checkbox("Rotate 180°", False)
-        text_color=st.sidebar.selectbox("Textcolor"["#FFFFFF", "#000000"])
+        text_color=st.sidebar.selectbox("Textcolor",["#FFFFFF", "#000000"])
         # Processing mode
         processing_mode = st.sidebar.radio(
             "Processing mode",
