@@ -47,12 +47,17 @@ WEIGHTS = {
 
 COMBINED_FACTOR = 0.85 # combined = (total_score * COMBINED_FACTOR + symmetry_score * (1-COMBINED_FACTOR))
 
-def calculate_joint_score(actual_angle, ideal_angle):
+def calculate_joint_score_lineair(actual_angle, ideal_angle):
     """Calculate score for a single joint (0-100)"""
     deviation = abs(actual_angle - ideal_angle)
     # Linear decay: perfect at 0° deviation, 0 at 50° deviation
     score = max(0, 100 - (deviation * 2))
     return score
+
+def calculate_joint_score(angle):
+    """Exact fit: 120→0, 150→70, 170≈95, 180→100"""
+    score = -0.0388889 * angle**2 + 13.1667 * angle - 940
+    return max(0, min(100, score))
 
 def calculate_handstand_score(angles):
     """
