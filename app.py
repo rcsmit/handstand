@@ -520,7 +520,7 @@ def run(run_streamlit, stframe, filetype, input_file, output_file, detection_con
                 for key in all_angles[0].keys():
                     avg_angles[key] = sum(frame[key] for frame in all_angles) / len(all_angles)
                 feedback(avg_angles)
-                if 1==2
+                if 1==2:
                     # Calculate scores
                     total_score, form_scores = calculate_handstand_score(avg_angles)
                     symmetry_score, symmetry_scores = calculate_symmetry_score(avg_angles)
