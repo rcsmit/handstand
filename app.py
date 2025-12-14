@@ -56,7 +56,7 @@ def calculate_joint_score_lineair(actual_angle, ideal_angle):
 
 
 
-def calculate_joint_score(angle):
+def calculate_joint_score(angle, ideal_angle):
     # Clamp possible range
     if angle < 120:
         return 0
