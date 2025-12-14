@@ -435,48 +435,48 @@ def show_feedback(angles, all_angles):
         
         # Create figure with subplots for each joint
         joints = ['shoulder', 'elbow', 'hip', 'knee']
-        
-        for joint in joints:
-            # fig = go.Figure()
-            
-            # Left side
-            left_angles = [frame[f'left_{joint}'] for frame in all_angles]
-            st.write(joint)
-            st.write(left_angles)
-            # fig.add_trace(go.Scatter(
-            #     x=frames, y=left_angles,
-            #     mode='lines+markers',
-            #     name=f'Left {joint}',
-            #     line=dict(color='blue', width=2)
-            # ))
-            
-            # # # Right side
-            # # right_angles = [frame[f'right_{joint}'] for frame in all_angles]
-            # # fig.add_trace(go.Scatter(
-            # #     x=frames, y=right_angles,
-            # #     mode='lines+markers',
-            # #     name=f'Right {joint}',
-            # #     line=dict(color='red', width=2)
-            # # ))
-            
-            # # Ideal line
-            # fig.add_trace(go.Scatter(
-            #     x=[frames[0], frames[-1]], 
-            #     y=[180, 180],
-            #     mode='lines',
-            #     name='Ideal (180°)',
-            #     line=dict(color='green', width=2, dash='dash')
-            # ))
-            
-            # fig.update_layout(
-            #     title=f'{joint.capitalize()} Angle Over Time',
-            #     xaxis_title='Frame',
-            #     yaxis_title='Angle (degrees)',
-            #     yaxis_range=[140, 190],
-            #     hovermode='x unified'
-            # )
-            
-            # st.plotly_chart(fig, use_container_width=True)
+        with st.expander("Angles in time",  expanded=False)
+            for joint in joints:
+                # fig = go.Figure()
+                
+                # Left side
+                left_angles = [frame[f'left_{joint}'] for frame in all_angles]
+                st.write(joint)
+                st.write(left_angles)
+                # fig.add_trace(go.Scatter(
+                #     x=frames, y=left_angles,
+                #     mode='lines+markers',
+                #     name=f'Left {joint}',
+                #     line=dict(color='blue', width=2)
+                # ))
+                
+                # # # Right side
+                # # right_angles = [frame[f'right_{joint}'] for frame in all_angles]
+                # # fig.add_trace(go.Scatter(
+                # #     x=frames, y=right_angles,
+                # #     mode='lines+markers',
+                # #     name=f'Right {joint}',
+                # #     line=dict(color='red', width=2)
+                # # ))
+                
+                # # Ideal line
+                # fig.add_trace(go.Scatter(
+                #     x=[frames[0], frames[-1]], 
+                #     y=[180, 180],
+                #     mode='lines',
+                #     name='Ideal (180°)',
+                #     line=dict(color='green', width=2, dash='dash')
+                # ))
+                
+                # fig.update_layout(
+                #     title=f'{joint.capitalize()} Angle Over Time',
+                #     xaxis_title='Frame',
+                #     yaxis_title='Angle (degrees)',
+                #     yaxis_range=[140, 190],
+                #     hovermode='x unified'
+                # )
+                
+                # st.plotly_chart(fig, use_container_width=True)
 def run(run_streamlit, stframe, filetype, input_file, output_file, detection_confidence, tracking_confidence, complexity, rotate, text_color, show_live=True):
     
     mp_pose, mp_drawing = setup_mediapipe()
