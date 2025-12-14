@@ -329,7 +329,7 @@ def process_frame(image, pose, mp_pose, mp_drawing, drawing_spec, drawing_spec_p
     finally:
         # Force garbage collection
         gc.collect()
-        
+
 def feedback(angles):
     total_score, form_scores = calculate_handstand_score(angles)
     symmetry_score, symmetry_scores = calculate_symmetry_score(angles)
@@ -696,7 +696,7 @@ def main():
         st.set_page_config(page_title="Handstand Analyzer", page_icon="🤸")
         
         st.header("🤸 Handstand Analyzer")
-        st.write("**Cloud Run Edition** - version 131225f")
+        st.write("**Cloud Run Edition** - version 141225a")
         
         # Show Cloud Run tips
         with st.expander("ℹ️ How it works"):
