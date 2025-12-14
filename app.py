@@ -405,24 +405,24 @@ def show_feedback(angles, all_angles):
     # Angle details
     #with st.expander("🔢 Measured Angles"):
     cols = st.columns(3)
-        with cols[0]:
-            st.write("**Left Side:**")
-            st.write(f"Shoulder: {angles['left_shoulder']}° (ideal: 180°)")
-            st.write(f"Elbow: {angles['left_elbow']}° (ideal: 180°)")
-            st.write(f"Hip: {angles['left_hip']}° (ideal: 180°)")
-            st.write(f"Knee: {angles['left_knee']}° (ideal: 180°)")
-        # with cols[1]:
-        #     st.write("**Right Side:**")
-        #     st.write(f"Shoulder: {angles['right_shoulder']}° (ideal: 180°)")
-        #     st.write(f"Elbow: {angles['right_elbow']}° (ideal: 180°)")
-        #     st.write(f"Hip: {angles['right_hip']}° (ideal: 180°)")
-        #     st.write(f"Knee: {angles['right_knee']}° (ideal: 180°)")
-        with cols[2]:
-            st.write("**Weight factor**")
-            st.write(f"Shoulder: {WEIGHTS['shoulder']}")
-            st.write(f"Elbow: {WEIGHTS['elbow']}")
-            st.write(f"Hip: {WEIGHTS['hip']}")
-            st.write(f"Knee: {WEIGHTS['knee']}")
+    with cols[0]:
+        st.write("**Left Side:**")
+        st.write(f"Shoulder: {angles['left_shoulder']}° (ideal: 180°)")
+        st.write(f"Elbow: {angles['left_elbow']}° (ideal: 180°)")
+        st.write(f"Hip: {angles['left_hip']}° (ideal: 180°)")
+        st.write(f"Knee: {angles['left_knee']}° (ideal: 180°)")
+    # with cols[1]:
+    #     st.write("**Right Side:**")
+    #     st.write(f"Shoulder: {angles['right_shoulder']}° (ideal: 180°)")
+    #     st.write(f"Elbow: {angles['right_elbow']}° (ideal: 180°)")
+    #     st.write(f"Hip: {angles['right_hip']}° (ideal: 180°)")
+    #     st.write(f"Knee: {angles['right_knee']}° (ideal: 180°)")
+    with cols[2]:
+        st.write("**Weight factor**")
+        st.write(f"Shoulder: {WEIGHTS['shoulder']}")
+        st.write(f"Elbow: {WEIGHTS['elbow']}")
+        st.write(f"Hip: {WEIGHTS['hip']}")
+        st.write(f"Knee: {WEIGHTS['knee']}")
     if all_angles:
         # Create angle progression graphs
         st.subheader("📈 Angle Progression Over Time")
