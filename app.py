@@ -381,8 +381,8 @@ def show_feedback(angles):
     
     # Detailed breakdown
     st.write("**Joint Scores:**")
-        for joint, score in form_scores.items():
-            st.progress(score/100, text=f"{joint.capitalize()}: {score:.0f}/100")
+    for joint, score in form_scores.items():
+        st.progress(score/100, text=f"{joint.capitalize()}: {score:.0f}/100")
         
     # with st.expander("📊 Detailed Breakdown", expanded=True):
     #     col1, col2 = st.columns(2)
