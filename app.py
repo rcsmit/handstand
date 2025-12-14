@@ -329,7 +329,86 @@ def process_frame(image, pose, mp_pose, mp_drawing, drawing_spec, drawing_spec_p
     finally:
         # Force garbage collection
         gc.collect()
-
+        
+def feedback(angles):
+    total_score, form_scores = calculate_handstand_score(angles)
+    symmetry_score, symmetry_scores = calculate_symmetry_score(angles)
+    feedback = generate_feedback(angles, form_scores, symmetry_scores)
+    
+    # Display scores
+    st.subheader("🏆 Handstand Analysis")
+    
+    # Overall score
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        st.metric("Form Score", f"{total_score:.1f}/100")
+    with col2:
+        st.metric("Symmetry Score", f"{symmetry_score:.1f}/100")
+    with col3:
+        # combined = (total_score * 0.7 + symmetry_score * 0.3)
+        combined = (total_score * COMBINED_FACTOR + symmetry_score * (1-COMBINED_FACTOR))
+    
+        st.metric("Overall Score", f"{combined:.1f}/100")
+    
+    # Grade
+    if combined >= 90:
+        grade = "⭐⭐⭐⭐⭐ EXCELLENT"
+        grade_color = "green"
+    elif combined >= 80:
+        grade = "⭐⭐⭐⭐ GREAT"
+        grade_color = "blue"
+    elif combined >= 70:
+        grade = "⭐⭐⭐ GOOD"
+        grade_color = "orange"
+    elif combined >= 60:
+        grade = "⭐⭐ FAIR"
+        grade_color = "orange"
+    else:
+        grade = "⭐ NEEDS WORK"
+        grade_color = "red"
+    
+    st.markdown(f"### :{grade_color}[{grade}]")
+    
+    # Detailed breakdown
+    with st.expander("📊 Detailed Breakdown", expanded=True):
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            st.write("**Joint Scores:**")
+            for joint, score in form_scores.items():
+                st.progress(score/100, text=f"{joint.capitalize()}: {score:.0f}/100")
+        
+        with col2:
+            st.write("**Symmetry Scores:**")
+            for joint, score in symmetry_scores.items():
+                st.progress(score/100, text=f"{joint.capitalize()}: {score:.0f}/100")
+    
+    # Feedback
+    st.subheader("💬 Feedback & Tips")
+    for tip in feedback:
+        st.write(tip)
+    
+    # Angle details
+    with st.expander("🔢 Measured Angles"):
+        cols = st.columns(3)
+        with cols[0]:
+            st.write("**Left Side:**")
+            st.write(f"Shoulder: {angles['left_shoulder']}° (ideal: 180°)")
+            st.write(f"Elbow: {angles['left_elbow']}° (ideal: 180°)")
+            st.write(f"Hip: {angles['left_hip']}° (ideal: 180°)")
+            st.write(f"Knee: {angles['left_knee']}° (ideal: 180°)")
+        with cols[1]:
+            st.write("**Right Side:**")
+            st.write(f"Shoulder: {angles['right_shoulder']}° (ideal: 180°)")
+            st.write(f"Elbow: {angles['right_elbow']}° (ideal: 180°)")
+            st.write(f"Hip: {angles['right_hip']}° (ideal: 180°)")
+            st.write(f"Knee: {angles['right_knee']}° (ideal: 180°)")
+        with cols[2]:
+            st.write("**Weight factor**")
+            st.write(f"Shoulder: {WEIGHTS['shoulder']}")
+            st.write(f"Elbow: {WEIGHTS['elbow']}")
+            st.write(f"Hip: {WEIGHTS['hip']}")
+            st.write(f"Knee: {WEIGHTS['knee']}")
 def run(run_streamlit, stframe, filetype, input_file, output_file, detection_confidence, tracking_confidence, complexity, rotate, show_live=True):
     
     mp_pose, mp_drawing = setup_mediapipe()
@@ -360,8 +439,8 @@ def run(run_streamlit, stframe, filetype, input_file, output_file, detection_con
         
         # Create output video file
         output_path = '/tmp/output_video.mp4'
-        output_width = int(width * RESIZE_FACTOR * 0.5)  # Display size
-        output_height = int(height * RESIZE_FACTOR * 0.5)
+        output_width = int(width * RESIZE_FACTOR)  # Display size
+        output_height = int(height * RESIZE_FACTOR)
         fourcc = cv2.VideoWriter_fourcc(*'mp4v')
         video_writer = cv2.VideoWriter(output_path, fourcc, fps // SKIP_FRAMES, 
                                        (output_width, output_height))
@@ -440,86 +519,87 @@ def run(run_streamlit, stframe, filetype, input_file, output_file, detection_con
                 avg_angles = {}
                 for key in all_angles[0].keys():
                     avg_angles[key] = sum(frame[key] for frame in all_angles) / len(all_angles)
-                
-                # Calculate scores
-                total_score, form_scores = calculate_handstand_score(avg_angles)
-                symmetry_score, symmetry_scores = calculate_symmetry_score(avg_angles)
-                feedback = generate_feedback(avg_angles, form_scores, symmetry_scores)
-                
-                # Display scores
-                st.subheader("🏆 Handstand Analysis")
-                
-                # Overall score with visual
-                col1, col2, col3 = st.columns(3)
-                with col1:
-                    st.metric("Form Score", f"{total_score:.1f}/100")
-                with col2:
-                    st.metric("Symmetry Score", f"{symmetry_score:.1f}/100")
-                with col3:
-                    # combined = (total_score * 0.7 + symmetry_score * 0.3)
-                    combined = (total_score * COMBINED_FACTOR + symmetry_score * (1-COMBINED_FACTOR))
+                feedback(avg_angles)
+                if 1==2
+                    # Calculate scores
+                    total_score, form_scores = calculate_handstand_score(avg_angles)
+                    symmetry_score, symmetry_scores = calculate_symmetry_score(avg_angles)
+                    feedback = generate_feedback(avg_angles, form_scores, symmetry_scores)
                     
-                    st.metric("Overall Score", f"{combined:.1f}/100")
-                
-                # Grade
-                if combined >= 90:
-                    grade = "⭐⭐⭐⭐⭐ EXCELLENT"
-                    grade_color = "green"
-                elif combined >= 80:
-                    grade = "⭐⭐⭐⭐ GREAT"
-                    grade_color = "blue"
-                elif combined >= 70:
-                    grade = "⭐⭐⭐ GOOD"
-                    grade_color = "orange"
-                elif combined >= 60:
-                    grade = "⭐⭐ FAIR"
-                    grade_color = "orange"
-                else:
-                    grade = "⭐ NEEDS WORK"
-                    grade_color = "red"
-                
-                st.markdown(f"### :{grade_color}[{grade}]")
-                
-                # Detailed breakdown
-                with st.expander("📊 Detailed Breakdown", expanded=True):
-                    col1, col2 = st.columns(2)
+                    # Display scores
+                    st.subheader("🏆 Handstand Analysis")
                     
+                    # Overall score with visual
+                    col1, col2, col3 = st.columns(3)
                     with col1:
-                        st.write("**Joint Scores:**")
-                        for joint, score in form_scores.items():
-                            st.progress(score/100, text=f"{joint.capitalize()}: {score:.0f}/100")
-                    
+                        st.metric("Form Score", f"{total_score:.1f}/100")
                     with col2:
-                        st.write("**Symmetry Scores:**")
-                        for joint, score in symmetry_scores.items():
-                            st.progress(score/100, text=f"{joint.capitalize()}: {score:.0f}/100")
-                
-                # Feedback
-                st.subheader("💬 Feedback & Tips")
-                for tip in feedback:
-                    st.write(tip)
-                
-                # Angle details
-                with st.expander("🔢 Average Angles"):
-                    cols = st.columns(3)
-                    with cols[0]:
-                        st.write("**Left Side:**")
-                        st.write(f"Shoulder: {avg_angles['left_shoulder']:.1f}° (ideal: 180°)")
-                        st.write(f"Elbow: {avg_angles['left_elbow']:.1f}° (ideal: 180°)")
-                        st.write(f"Hip: {avg_angles['left_hip']:.1f}° (ideal: 180°)")
-                        st.write(f"Knee: {avg_angles['left_knee']:.1f}° (ideal: 180°)")
-                    with cols[1]:
-                        st.write("**Right Side:**")
-                        st.write(f"Shoulder: {avg_angles['right_shoulder']:.1f}° (ideal: 180°)")
-                        st.write(f"Elbow: {avg_angles['right_elbow']:.1f}° (ideal: 180°)")
-                        st.write(f"Hip: {avg_angles['right_hip']:.1f}° (ideal: 180°)")
-                        st.write(f"Knee: {avg_angles['right_knee']:.1f}° (ideal: 180°)")
-                    with cols[2]:
-                        st.write("**Weight factor**")
-                        st.write(f"Shoulder: {WEIGHTS['shoulder']}")
-                        st.write(f"Elbow: {WEIGHTS['elbow']}")
-                        st.write(f"Hip: {WEIGHTS['hip']}")
-                        st.write(f"Knee: {WEIGHTS['knee']}")
+                        st.metric("Symmetry Score", f"{symmetry_score:.1f}/100")
+                    with col3:
+                        # combined = (total_score * 0.7 + symmetry_score * 0.3)
+                        combined = (total_score * COMBINED_FACTOR + symmetry_score * (1-COMBINED_FACTOR))
+                        
+                        st.metric("Overall Score", f"{combined:.1f}/100")
+                    
+                    # Grade
+                    if combined >= 90:
+                        grade = "⭐⭐⭐⭐⭐ EXCELLENT"
+                        grade_color = "green"
+                    elif combined >= 80:
+                        grade = "⭐⭐⭐⭐ GREAT"
+                        grade_color = "blue"
+                    elif combined >= 70:
+                        grade = "⭐⭐⭐ GOOD"
+                        grade_color = "orange"
+                    elif combined >= 60:
+                        grade = "⭐⭐ FAIR"
+                        grade_color = "orange"
+                    else:
+                        grade = "⭐ NEEDS WORK"
+                        grade_color = "red"
+                    
+                    st.markdown(f"### :{grade_color}[{grade}]")
+                    
+                    # Detailed breakdown
+                    with st.expander("📊 Detailed Breakdown", expanded=True):
+                        col1, col2 = st.columns(2)
+                        
+                        with col1:
+                            st.write("**Joint Scores:**")
+                            for joint, score in form_scores.items():
+                                st.progress(score/100, text=f"{joint.capitalize()}: {score:.0f}/100")
+                        
+                        with col2:
+                            st.write("**Symmetry Scores:**")
+                            for joint, score in symmetry_scores.items():
+                                st.progress(score/100, text=f"{joint.capitalize()}: {score:.0f}/100")
+                    
+                    # Feedback
+                    st.subheader("💬 Feedback & Tips")
+                    for tip in feedback:
+                        st.write(tip)
+                    
+                    # Angle details
+                    with st.expander("🔢 Average Angles"):
+                        cols = st.columns(3)
+                        with cols[0]:
+                            st.write("**Left Side:**")
+                            st.write(f"Shoulder: {avg_angles['left_shoulder']:.1f}° (ideal: 180°)")
+                            st.write(f"Elbow: {avg_angles['left_elbow']:.1f}° (ideal: 180°)")
+                            st.write(f"Hip: {avg_angles['left_hip']:.1f}° (ideal: 180°)")
+                            st.write(f"Knee: {avg_angles['left_knee']:.1f}° (ideal: 180°)")
+                        with cols[1]:
+                            st.write("**Right Side:**")
+                            st.write(f"Shoulder: {avg_angles['right_shoulder']:.1f}° (ideal: 180°)")
+                            st.write(f"Elbow: {avg_angles['right_elbow']:.1f}° (ideal: 180°)")
+                            st.write(f"Hip: {avg_angles['right_hip']:.1f}° (ideal: 180°)")
+                            st.write(f"Knee: {avg_angles['right_knee']:.1f}° (ideal: 180°)")
+                        with cols[2]:
+                            st.write("**Weight factor**")
+                            st.write(f"Shoulder: {WEIGHTS['shoulder']}")
+                            st.write(f"Elbow: {WEIGHTS['elbow']}")
+                            st.write(f"Hip: {WEIGHTS['hip']}")
+                            st.write(f"Knee: {WEIGHTS['knee']}")
             
             # Show final frame and download button
             if run_streamlit:
@@ -577,84 +657,7 @@ def run(run_streamlit, stframe, filetype, input_file, output_file, detection_con
             if run_streamlit:
                 # Calculate scores
                 if angles:
-                    total_score, form_scores = calculate_handstand_score(angles)
-                    symmetry_score, symmetry_scores = calculate_symmetry_score(angles)
-                    feedback = generate_feedback(angles, form_scores, symmetry_scores)
-                    
-                    # Display scores
-                    st.subheader("🏆 Handstand Analysis")
-                    
-                    # Overall score
-                    col1, col2, col3 = st.columns(3)
-                    with col1:
-                        st.metric("Form Score", f"{total_score:.1f}/100")
-                    with col2:
-                        st.metric("Symmetry Score", f"{symmetry_score:.1f}/100")
-                    with col3:
-                        # combined = (total_score * 0.7 + symmetry_score * 0.3)
-                        combined = (total_score * COMBINED_FACTOR + symmetry_score * (1-COMBINED_FACTOR))
-                    
-                        st.metric("Overall Score", f"{combined:.1f}/100")
-                    
-                    # Grade
-                    if combined >= 90:
-                        grade = "⭐⭐⭐⭐⭐ EXCELLENT"
-                        grade_color = "green"
-                    elif combined >= 80:
-                        grade = "⭐⭐⭐⭐ GREAT"
-                        grade_color = "blue"
-                    elif combined >= 70:
-                        grade = "⭐⭐⭐ GOOD"
-                        grade_color = "orange"
-                    elif combined >= 60:
-                        grade = "⭐⭐ FAIR"
-                        grade_color = "orange"
-                    else:
-                        grade = "⭐ NEEDS WORK"
-                        grade_color = "red"
-                    
-                    st.markdown(f"### :{grade_color}[{grade}]")
-                    
-                    # Detailed breakdown
-                    with st.expander("📊 Detailed Breakdown", expanded=True):
-                        col1, col2 = st.columns(2)
-                        
-                        with col1:
-                            st.write("**Joint Scores:**")
-                            for joint, score in form_scores.items():
-                                st.progress(score/100, text=f"{joint.capitalize()}: {score:.0f}/100")
-                        
-                        with col2:
-                            st.write("**Symmetry Scores:**")
-                            for joint, score in symmetry_scores.items():
-                                st.progress(score/100, text=f"{joint.capitalize()}: {score:.0f}/100")
-                    
-                    # Feedback
-                    st.subheader("💬 Feedback & Tips")
-                    for tip in feedback:
-                        st.write(tip)
-                    
-                    # Angle details
-                    with st.expander("🔢 Measured Angles"):
-                        cols = st.columns(3)
-                        with cols[0]:
-                            st.write("**Left Side:**")
-                            st.write(f"Shoulder: {angles['left_shoulder']}° (ideal: 180°)")
-                            st.write(f"Elbow: {angles['left_elbow']}° (ideal: 180°)")
-                            st.write(f"Hip: {angles['left_hip']}° (ideal: 180°)")
-                            st.write(f"Knee: {angles['left_knee']}° (ideal: 180°)")
-                        with cols[1]:
-                            st.write("**Right Side:**")
-                            st.write(f"Shoulder: {angles['right_shoulder']}° (ideal: 180°)")
-                            st.write(f"Elbow: {angles['right_elbow']}° (ideal: 180°)")
-                            st.write(f"Hip: {angles['right_hip']}° (ideal: 180°)")
-                            st.write(f"Knee: {angles['right_knee']}° (ideal: 180°)")
-                        with cols[2]:
-                            st.write("**Weight factor**")
-                            st.write(f"Shoulder: {WEIGHTS['shoulder']}")
-                            st.write(f"Elbow: {WEIGHTS['elbow']}")
-                            st.write(f"Hip: {WEIGHTS['hip']}")
-                            st.write(f"Knee: {WEIGHTS['knee']}")
+                    feedback(angles)
                 
                 # Show image
                 st.subheader("📸 Analyzed Image")
