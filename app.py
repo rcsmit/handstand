@@ -450,6 +450,7 @@ def show_feedback(angles, all_angles):
         st.write(f"Elbow: {WEIGHTS['elbow']}")
         st.write(f"Hip: {WEIGHTS['hip']}")
         st.write(f"Knee: {WEIGHTS['knee']}")
+    st.info("Angle | Result | 120 -  0 | 150 - 70 | 170 - 95 | 175 - 99 | 180 - 100 ")
     if all_angles:
         # Create angle progression graphs
         st.subheader("📈 Angle Progression Over Time")
@@ -792,6 +793,7 @@ def main():
                 os.remove(input_file)
             except:
                 pass
+    
 
 if __name__ == '__main__':
     main()
