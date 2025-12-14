@@ -4,3 +4,4 @@ mediapipe==0.10.20
 protobuf<5
 numpy
 pillow
+plotly
