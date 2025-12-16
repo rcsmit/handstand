@@ -284,10 +284,20 @@ def process_frame(image, pose, mp_pose, mp_drawing, drawing_spec, drawing_spec_p
 
 
         # Hide face landmarks
-        face_landmarks = ['LEFT_EYE', 'RIGHT_EYE', 'LEFT_EYE_INNER', 'RIGHT_EYE_INNER', 
+        hide_landmarks = ['LEFT_EYE', 'RIGHT_EYE', 'LEFT_EYE_INNER', 'RIGHT_EYE_INNER', 
                          'LEFT_EYE_OUTER', 'RIGHT_EYE_OUTER', 'NOSE', 'MOUTH_LEFT', 
-                         'MOUTH_RIGHT', 'LEFT_EAR', 'RIGHT_EAR', 'LEFT_SHOULDER', 'RIGHT_SHOULDER']
-        for lm_name in face_landmarks:
+                         'MOUTH_RIGHT', 'LEFT_EAR', 'RIGHT_EAR', 'LEFT_SHOULDER', 'RIGHT_SHOULDER',
+                         "LEFT_PINKY",
+                            "RIGHT_PINKY",
+                            "LEFT_INDEX",
+                            "RIGHT_INDEX",
+                            "LEFT_THUMB",
+                            "RIGHT_THUMB",
+                            "LEFT_HEEL",
+                            "RIGHT_HEEL",
+                            "LEFT_FOOT_INDEX",
+                            "RIGHT_FOOT_INDEX"]
+        for lm_name in hide_landmarks:
             landmarks[mp_pose.PoseLandmark[lm_name].value].visibility = 0
 
         # Calculate angles
