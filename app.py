@@ -384,10 +384,10 @@ def process_frame(image, pose, mp_pose, mp_drawing, drawing_spec, drawing_spec_p
 
         # Convert back and draw landmarks
         image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
-        # mp_drawing.draw_landmarks(
-        #     image, results.pose_landmarks, mp_pose.POSE_CONNECTIONS,
-        #     drawing_spec_points, connection_drawing_spec=drawing_spec
-        # )
+        mp_drawing.draw_landmarks(
+            image, results.pose_landmarks, mp_pose.POSE_CONNECTIONS,
+            drawing_spec_points, connection_drawing_spec=drawing_spec
+        )
 
         # Resize for display
         final_frame = cv2.resize(image, (0, 0), fx=0.5, fy=0.5)
@@ -550,6 +550,10 @@ def run(run_streamlit, stframe, filetype, input_file, output_file, detection_con
     
     # drawing_spec = mp_drawing.DrawingSpec(thickness=3, circle_radius=2, color=line_color_g)
     # drawing_spec_points = mp_drawing.DrawingSpec(thickness=3, circle_radius=2, color=line_color)
+
+
+    drawing_spec = mp_drawing.DrawingSpec(thickness=0, circle_radius=2, color=line_color_g)
+    drawing_spec_points = mp_drawing.DrawingSpec(thickness=0, circle_radius=2, color=line_color)
 
     if filetype == "video":
         vid = cv2.VideoCapture(input_file)
