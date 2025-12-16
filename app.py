@@ -322,7 +322,7 @@ def process_frame(image, pose, mp_pose, mp_drawing, drawing_spec, drawing_spec_p
                             "RIGHT_FOOT_INDEX"]
         if use_wrist_shoulder_hip:
             hide_landmarks = hide_landmarks+["LEFT_ELBOW", "RIGHT_ELBOW", "LEFT_WRIST", "RIGHT_WRIST"]
-        if if left_side_only:
+        if left_side_only:
             hide_landmarks = hide_landmarks+["RIGHT_WRIST"]
 
         for lm_name in hide_landmarks:
