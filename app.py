@@ -320,6 +320,8 @@ def process_frame(image, pose, mp_pose, mp_drawing, drawing_spec, drawing_spec_p
                             "RIGHT_HEEL",
                             "LEFT_FOOT_INDEX",
                             "RIGHT_FOOT_INDEX"]
+        if use_wrist_shoulder_hip:
+            hide_landmarks = hide_landmarks+["LEFT_ELBOW", "RIGHT_ELBOW", "LEFT_WRIST", "RIGHT_WRIST"]
         for lm_name in hide_landmarks:
             landmarks[mp_pose.PoseLandmark[lm_name].value].visibility = 0
 
@@ -911,7 +913,7 @@ def main():
         st.set_page_config(page_title="Handstand Analyzer", page_icon="🤸")
         
         st.header("🤸 Handstand Analyzer")
-        st.write("**Cloud Run Edition** - version 131225af")
+        st.write("**Cloud Run Edition** - version 131225ag")
         
         # Show Cloud Run tips
         with st.expander("ℹ️ How it works"):
