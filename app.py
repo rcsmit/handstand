@@ -287,8 +287,8 @@ def process_frame(image, pose, mp_pose, mp_drawing, drawing_spec, drawing_spec_p
         shoulder_r = get_landmark('RIGHT_SHOULDER')
         elbow = get_landmark('LEFT_ELBOW')
         elbow_r = get_landmark('RIGHT_ELBOW')
-        wrist = get_landmark('LEFT_WRIST')
-        wrist_r = get_landmark('RIGHT_WRIST')
+        # wrist = get_landmark('LEFT_WRIST')
+        # wrist_r = get_landmark('RIGHT_WRIST')
         left_hip = get_landmark('LEFT_HIP')
         right_hip = get_landmark('RIGHT_HIP')
         left_knee = get_landmark('LEFT_KNEE')
@@ -301,7 +301,7 @@ def process_frame(image, pose, mp_pose, mp_drawing, drawing_spec, drawing_spec_p
             wrist_r_ = get_landmark('RIGHT_WRIST')
             idx = get_landmark('LEFT_INDEX')
             idx_r = get_landmark('RIGHT_INDEX')
-            wrist= [(wrist_[0] + idx[0]) / 2, (wrist[1] + idx[1]) / 2]
+            wrist= [(wrist_[0] + idx[0]) / 2, (wrist_[1] + idx[1]) / 2]
             wrist_r= [(wrist_r_[0] + idx_r[0]) / 2, (wrist_r_[1] + idx_r[1]) / 2]
         else:
             wrist = get_landmark('LEFT_WRIST')
@@ -916,7 +916,7 @@ def main():
         st.set_page_config(page_title="Handstand Analyzer", page_icon="🤸")
         
         st.header("🤸 Handstand Analyzer")
-        st.write("**Cloud Run Edition** - version 131225ah")
+        st.write("**Cloud Run Edition** - version 131225ai")
         
         # Show Cloud Run tips
         with st.expander("ℹ️ How it works"):
