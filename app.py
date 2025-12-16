@@ -311,7 +311,7 @@ def process_frame(image, pose, mp_pose, mp_drawing, drawing_spec, drawing_spec_p
             #'right_leg': int(calculate_angle(right_hip, right_knee, right_ankle)),
             # 'left_shoulder': int(calculate_angle(left_hip, shoulder, elbow)),
             # #'right_shoulder': int(calculate_angle(right_hip, shoulder_r, elbow_r)),
-            'left_shoulder': int(calculate_angle(left_hip, shoulder, left hand)),
+            'left_shoulder': int(calculate_angle(left_hip, shoulder, left_hand)),
             #'right_shoulder': int(calculate_angle(right_hip, shoulder_r, elbow_r)),
             
 
