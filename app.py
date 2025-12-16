@@ -404,7 +404,7 @@ def process_frame(image, pose, mp_pose, mp_drawing, drawing_spec, drawing_spec_p
 
         # Add angle text (smaller font for Cloud Run)
         font_scale = 0.5
-        use_wrist_shoulder_hip:
+        if use_wrist_shoulder_hip:
             # Alternative shoulder angle: wrist → shoulder → hip
             if left_side_only:
                 angle_texts = [
