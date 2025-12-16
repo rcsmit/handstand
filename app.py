@@ -278,7 +278,7 @@ def process_frame(image, pose, mp_pose, mp_drawing, drawing_spec, drawing_spec_p
         #right_knee = get_landmark('RIGHT_KNEE')
         left_ankle = get_landmark('LEFT_ANKLE')
         #right_ankle = get_landmark('RIGHT_ANKLE')
-        hand_center = get_hand_center(lm)
+        
         left_hand = get_hand_center(landmarks)
         right_hand = get_hand_center(landmarks)
 
@@ -729,7 +729,7 @@ def main():
         st.set_page_config(page_title="Handstand Analyzer", page_icon="🤸")
         
         st.header("🤸 Handstand Analyzer")
-        st.write("**Cloud Run Edition** - version 161225a")
+        st.write("**Cloud Run Edition** - version 161225b")
         
         # Show Cloud Run tips
         with st.expander("ℹ️ How it works"):
