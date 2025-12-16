@@ -335,7 +335,7 @@ def process_frame(image, pose, mp_pose, mp_drawing, drawing_spec, drawing_spec_p
             #(right_hip, right_knee, line_color_r),
             # (wrist, elbow, line_color),
             # #(wrist_r, elbow_r, line_color_b),
-            (left_hand, elbow, line_color),
+            #(left_hand, elbow, line_color),
             #(wrist_r, elbow_r, line_color_b),
             (left_hand, shoulder, line_color),
             #(wrist_r, elbow_r, line_color_b),
@@ -748,7 +748,7 @@ def main():
         st.set_page_config(page_title="Handstand Analyzer", page_icon="🤸")
         
         st.header("🤸 Handstand Analyzer")
-        st.write("**Cloud Run Edition** - version 161225g")
+        st.write("**Cloud Run Edition** - version 161225h")
         
         # Show Cloud Run tips
         with st.expander("ℹ️ How it works"):
