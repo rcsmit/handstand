@@ -320,7 +320,7 @@ def process_frame(image, pose, mp_pose, mp_drawing, drawing_spec, drawing_spec_p
             'left_hip': int(calculate_angle(shoulder, left_hip, left_knee)),
             #'right_hip': int(calculate_angle(shoulder_r, right_hip, right_knee)),
             'left_elbow': int(calculate_angle(shoulder, elbow, wrist)),
-            'right_elbow': int(calculate_angle(shoulder_r, elbow_r, wrist_r)),
+            #'right_elbow': int(calculate_angle(shoulder_r, elbow_r, wrist_r)),
             #'left_knee': int(calculate_angle(left_hip, left_knee, left_ankle)),
             #'right_knee': int(calculate_angle(right_hip, right_knee, right_ankle))
             
@@ -748,7 +748,7 @@ def main():
         st.set_page_config(page_title="Handstand Analyzer", page_icon="🤸")
         
         st.header("🤸 Handstand Analyzer")
-        st.write("**Cloud Run Edition** - version 161225e")
+        st.write("**Cloud Run Edition** - version 161225f")
         
         # Show Cloud Run tips
         with st.expander("ℹ️ How it works"):
