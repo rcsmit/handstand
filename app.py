@@ -296,6 +296,16 @@ def process_frame(image, pose, mp_pose, mp_drawing, drawing_spec, drawing_spec_p
         left_ankle = get_landmark('LEFT_ANKLE')
         right_ankle = get_landmark('RIGHT_ANKLE')
 
+        if use_wrist_shoulder_hip:
+            wrist_ = get_landmark('LEFT_WRIST')
+            wrist_r_ = get_landmark('RIGHT_WRIST')
+            idx = get_landmark('LEFT_INDEX')
+            idx_r = get_landmark('RIGHT_INDEX')
+            wrist= [(wrist_.x + idx.x) / 2, (wrist.y + idx.y) / 2]
+            wrist_r= [(wrist_r_.x + idx_r.x) / 2, (wrist_r_.y + idx_r.y) / 2]
+        else:
+            wrist = get_landmark('LEFT_WRIST')
+            wrist_r = get_landmark('RIGHT_WRIST')
         # Hide face landmarks
         face_landmarks = ['LEFT_EYE', 'RIGHT_EYE', 'LEFT_EYE_INNER', 'RIGHT_EYE_INNER', 
                          'LEFT_EYE_OUTER', 'RIGHT_EYE_OUTER', 'NOSE', 'MOUTH_LEFT', 
@@ -443,10 +453,12 @@ def process_frame(image, pose, mp_pose, mp_drawing, drawing_spec, drawing_spec_p
 
         # Convert back and draw landmarks
         image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
+        
         mp_drawing.draw_landmarks(
             image, results.pose_landmarks, mp_pose.POSE_CONNECTIONS,
             drawing_spec_points, connection_drawing_spec=drawing_spec
         )
+        mp_pose.POSE_CONNECTIONS.clear()
 
         # Resize for display
         final_frame = cv2.resize(image, (0, 0), fx=0.5, fy=0.5)
@@ -472,8 +484,8 @@ def run(run_streamlit, stframe, filetype, input_file, output_file, detection_con
     
     # drawing_spec = mp_drawing.DrawingSpec(thickness=3, circle_radius=2, color=line_color_g)
     # drawing_spec_points = mp_drawing.DrawingSpec(thickness=3, circle_radius=2, color=line_color)
-    drawing_spec = mp_drawing.DrawingSpec(thickness=0, circle_radius=0, color=line_color_g)
-    drawing_spec_points = mp_drawing.DrawingSpec(thickness=0, circle_radius=0, color=line_color)
+    drawing_spec = mp_drawing.DrawingSpec(thickness=1, circle_radius=0, color=line_color_g)
+    drawing_spec_points = mp_drawing.DrawingSpec(thickness=1, circle_radius=0, color=line_color)
 
     if filetype == "video":
         vid = cv2.VideoCapture(input_file)
@@ -887,7 +899,7 @@ def main():
         st.set_page_config(page_title="Handstand Analyzer", page_icon="🤸")
         
         st.header("🤸 Handstand Analyzer")
-        st.write("**Cloud Run Edition** - version 131225ac")
+        st.write("**Cloud Run Edition** - version 131225ad")
         
         # Show Cloud Run tips
         with st.expander("ℹ️ How it works"):
