@@ -94,7 +94,7 @@ def calculate_handstand_score(angles):
     scores = {}
     
     # Calculate average for each joint (left + right)
-    for joint in ['shoulder', 'elbow', 'hip', 'knee']:
+    for joint in ['shoulder',  'hip', 'knee']: #'elbow',
         # left_angle = angles.get(f'left_{joint}', 0)
         # right_angle = angles.get(f'right_{joint}', 0)
         # avg_angle = (left_angle + right_angle) / 2
@@ -134,14 +134,14 @@ def generate_feedback(angles, form_scores): #, symmetry_scores):
     else:
         feedback.append("✨ Excellent shoulder position!")
     
-    # Check elbows
-    avg_elbow = angles['left_elbow'] #+ angles['right_elbow']) / 2
-    if avg_elbow < 170:
-        feedback.append("⚠️ Lock your elbows! Bent arms are dangerous and unstable")
-    elif avg_elbow < 178:
-        feedback.append("💪 Almost there - lock out those elbows completely")
-    else:
-        feedback.append("✨ Perfect elbow lock!")
+    # # Check elbows
+    # avg_elbow = angles['left_elbow'] #+ angles['right_elbow']) / 2
+    # if avg_elbow < 170:
+    #     feedback.append("⚠️ Lock your elbows! Bent arms are dangerous and unstable")
+    # elif avg_elbow < 178:
+    #     feedback.append("💪 Almost there - lock out those elbows completely")
+    # else:
+    #     feedback.append("✨ Perfect elbow lock!")
     
     # Check hips
     avg_hip = angles['left_hip'] #+ angles['right_hip']) / 2
@@ -304,18 +304,22 @@ def process_frame(image, pose, mp_pose, mp_drawing, drawing_spec, drawing_spec_p
         angles = {
             # 'left_arm': int(calculate_angle(shoulder, elbow, wrist)),
             # #'right_arm': int(calculate_angle(shoulder_r, elbow_r, wrist_r)),
-            'left_arm': int(calculate_angle(shoulder, elbow, left_hand)),
+            # 'left_arm': int(calculate_angle(shoulder, elbow, left_hand)),
             #'right_arm': int(calculate_angle(shoulder_r, elbow_r, right_hand)),
 
             'left_leg': int(calculate_angle(left_hip, left_knee, left_ankle)),
             #'right_leg': int(calculate_angle(right_hip, right_knee, right_ankle)),
-            'left_shoulder': int(calculate_angle(left_hip, shoulder, elbow)),
+            # 'left_shoulder': int(calculate_angle(left_hip, shoulder, elbow)),
+            # #'right_shoulder': int(calculate_angle(right_hip, shoulder_r, elbow_r)),
+            'left_shoulder': int(calculate_angle(left_hip, shoulder, left hand)),
             #'right_shoulder': int(calculate_angle(right_hip, shoulder_r, elbow_r)),
+            
+
             'left_hip': int(calculate_angle(shoulder, left_hip, left_knee)),
             #'right_hip': int(calculate_angle(shoulder_r, right_hip, right_knee)),
-            'left_elbow': int(calculate_angle(shoulder, elbow, wrist)),
+            # 'left_elbow': int(calculate_angle(shoulder, elbow, wrist)),
             #'right_elbow': int(calculate_angle(shoulder_r, elbow_r, wrist_r)),
-            'left_knee': int(calculate_angle(left_hip, left_knee, left_ankle)),
+            #'left_knee': int(calculate_angle(left_hip, left_knee, left_ankle)),
             #'right_knee': int(calculate_angle(right_hip, right_knee, right_ankle))
             
            
@@ -331,7 +335,10 @@ def process_frame(image, pose, mp_pose, mp_drawing, drawing_spec, drawing_spec_p
             # #(wrist_r, elbow_r, line_color_b),
             (left_hand, elbow, line_color),
             #(wrist_r, elbow_r, line_color_b),
-            (shoulder, elbow, line_color),
+            (left_hand, shouder, line_color),
+            #(wrist_r, elbow_r, line_color_b),
+           
+            #(shoulder, elbow, line_color),
             #(shoulder_r, elbow_r, line_color_r),
             (shoulder, left_hip, line_color),
             #(shoulder_r, right_hip, line_color_r),
@@ -360,7 +367,7 @@ def process_frame(image, pose, mp_pose, mp_drawing, drawing_spec, drawing_spec_p
         angle_texts = [
             (f"knee: {angles['left_knee']}", left_knee),
             (f"hip: {angles['left_hip']}", left_hip),
-            (f"elbow: {angles['left_elbow']}", elbow),
+            #(f"elbow: {angles['left_elbow']}", elbow),
             (f"shoulder: {angles['left_shoulder']}", shoulder),
         ]
         
@@ -739,7 +746,7 @@ def main():
         st.set_page_config(page_title="Handstand Analyzer", page_icon="🤸")
         
         st.header("🤸 Handstand Analyzer")
-        st.write("**Cloud Run Edition** - version 161225b")
+        st.write("**Cloud Run Edition** - version 161225c")
         
         # Show Cloud Run tips
         with st.expander("ℹ️ How it works"):
