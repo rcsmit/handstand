@@ -309,16 +309,18 @@ def process_frame(image, pose, mp_pose, mp_drawing, drawing_spec, drawing_spec_p
 
             'left_leg': int(calculate_angle(left_hip, left_knee, left_ankle)),
             #'right_leg': int(calculate_angle(right_hip, right_knee, right_ankle)),
-            # 'left_shoulder': int(calculate_angle(left_hip, shoulder, elbow)),
-            # #'right_shoulder': int(calculate_angle(right_hip, shoulder_r, elbow_r)),
+            'left_shoulder_incl_elbow': int(calculate_angle(left_hip, shoulder, elbow)),
+            #'right_shoulder_incl_elbow': int(calculate_angle(right_hip, shoulder_r, elbow_r)),
+           
+           
             'left_shoulder': int(calculate_angle(left_hip, shoulder, left_hand)),
             #'right_shoulder': int(calculate_angle(right_hip, shoulder_r, elbow_r)),
             
 
             'left_hip': int(calculate_angle(shoulder, left_hip, left_knee)),
             #'right_hip': int(calculate_angle(shoulder_r, right_hip, right_knee)),
-            # 'left_elbow': int(calculate_angle(shoulder, elbow, wrist)),
-            #'right_elbow': int(calculate_angle(shoulder_r, elbow_r, wrist_r)),
+            'left_elbow': int(calculate_angle(shoulder, elbow, wrist)),
+            'right_elbow': int(calculate_angle(shoulder_r, elbow_r, wrist_r)),
             #'left_knee': int(calculate_angle(left_hip, left_knee, left_ankle)),
             #'right_knee': int(calculate_angle(right_hip, right_knee, right_ankle))
             
@@ -335,7 +337,7 @@ def process_frame(image, pose, mp_pose, mp_drawing, drawing_spec, drawing_spec_p
             # #(wrist_r, elbow_r, line_color_b),
             (left_hand, elbow, line_color),
             #(wrist_r, elbow_r, line_color_b),
-            (left_hand, shouder, line_color),
+            (left_hand, shoulder, line_color),
             #(wrist_r, elbow_r, line_color_b),
            
             #(shoulder, elbow, line_color),
@@ -746,7 +748,7 @@ def main():
         st.set_page_config(page_title="Handstand Analyzer", page_icon="🤸")
         
         st.header("🤸 Handstand Analyzer")
-        st.write("**Cloud Run Edition** - version 161225d")
+        st.write("**Cloud Run Edition** - version 161225e")
         
         # Show Cloud Run tips
         with st.expander("ℹ️ How it works"):
