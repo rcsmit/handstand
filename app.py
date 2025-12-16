@@ -552,8 +552,8 @@ def run(run_streamlit, stframe, filetype, input_file, output_file, detection_con
     # drawing_spec_points = mp_drawing.DrawingSpec(thickness=3, circle_radius=2, color=line_color)
 
 
-    drawing_spec = mp_drawing.DrawingSpec(thickness=0, circle_radius=2, color=line_color_g)
-    drawing_spec_points = mp_drawing.DrawingSpec(thickness=0, circle_radius=2, color=line_color)
+    drawing_spec = mp_drawing.DrawingSpec(thickness=1, circle_radius=1, color=line_color_g)
+    drawing_spec_points = mp_drawing.DrawingSpec(thickness=1, circle_radius=1, color=line_color)
 
     if filetype == "video":
         vid = cv2.VideoCapture(input_file)
@@ -753,7 +753,7 @@ def main():
         st.set_page_config(page_title="Handstand Analyzer", page_icon="🤸")
         
         st.header("🤸 Handstand Analyzer")
-        st.write("**Cloud Run Edition** - version 161225j")
+        st.write("**Cloud Run Edition** - version 161225k")
         
         # Show Cloud Run tips
         with st.expander("ℹ️ How it works"):
