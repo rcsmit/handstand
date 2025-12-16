@@ -338,29 +338,53 @@ def process_frame(image, pose, mp_pose, mp_drawing, drawing_spec, drawing_spec_p
             }
 
         # Draw lines (vectorized)
-        if left_side_only:
-            # Only draw left side
-            lines = [
-                (left_ankle, left_knee, line_color),
-                (left_hip, left_knee, line_color),
-                (wrist, elbow, line_color),
-                (shoulder, elbow, line_color),
-                (shoulder, left_hip, line_color),
-            ]
+        if use_wrist_shoulder_hip:
+            # Alternative shoulder angle: wrist → shoulder → hip
+            if left_side_only:
+                # Only draw left side
+                lines = [
+                    (left_ankle, left_knee, line_color),
+                    (left_hip, left_knee, line_color),
+                    (wrist, shoulder, line_color),
+                 
+                    (shoulder, left_hip, line_color),
+                ]
+            else:
+                # Draw both sides
+                lines = [
+                    (left_ankle, left_knee, line_color),
+                    (right_ankle, right_knee, line_color_r),
+                    (left_hip, left_knee, line_color),
+                    (right_hip, right_knee, line_color_r),
+                    (wrist, shoulder, line_color),
+                    (wrist_r, shoulder_r, line_color_b),
+                    (shoulder, left_hip, line_color),
+                    (shoulder_r, right_hip, line_color_r),
+                ]
         else:
-            # Draw both sides
-            lines = [
-                (left_ankle, left_knee, line_color),
-                (right_ankle, right_knee, line_color_r),
-                (left_hip, left_knee, line_color),
-                (right_hip, right_knee, line_color_r),
-                (wrist, elbow, line_color),
-                (wrist_r, elbow_r, line_color_b),
-                (shoulder, elbow, line_color),
-                (shoulder_r, elbow_r, line_color_r),
-                (shoulder, left_hip, line_color),
-                (shoulder_r, right_hip, line_color_r),
-            ]
+            if left_side_only:
+                # Only draw left side
+                lines = [
+                    (left_ankle, left_knee, line_color),
+                    (left_hip, left_knee, line_color),
+                    (wrist, elbow, line_color),
+                    (shoulder, elbow, line_color),
+                    (shoulder, left_hip, line_color),
+                ]
+            else:
+                # Draw both sides
+                lines = [
+                    (left_ankle, left_knee, line_color),
+                    (right_ankle, right_knee, line_color_r),
+                    (left_hip, left_knee, line_color),
+                    (right_hip, right_knee, line_color_r),
+                    (wrist, elbow, line_color),
+                    (wrist_r, elbow_r, line_color_b),
+                    (shoulder, elbow, line_color),
+                    (shoulder_r, elbow_r, line_color_r),
+                    (shoulder, left_hip, line_color),
+                    (shoulder_r, right_hip, line_color_r),
+                ]
         
         for p1, p2, color in lines:
             cv2.line(image, 
@@ -380,20 +404,35 @@ def process_frame(image, pose, mp_pose, mp_drawing, drawing_spec, drawing_spec_p
 
         # Add angle text (smaller font for Cloud Run)
         font_scale = 0.5
-        if left_side_only:
-            angle_texts = [
-                (f"knee: {angles['left_knee']}", left_knee),
-                (f"hip: {angles['left_hip']}", left_hip),
-                (f"elbow: {angles['left_elbow']}", elbow),
-                (f"shoulder: {angles['left_shoulder']}", shoulder),
-            ]
+        use_wrist_shoulder_hip:
+            # Alternative shoulder angle: wrist → shoulder → hip
+            if left_side_only:
+                angle_texts = [
+                    (f"knee: {angles['left_knee']}", left_knee),
+                    (f"hip: {angles['left_hip']}", left_hip),
+                    (f"shoulder: {angles['left_shoulder']}", shoulder),
+                ]
+            else:
+                angle_texts = [
+                    (f"knee: {angles['left_knee']}/{angles['right_knee']}", left_knee),
+                    (f"hip: {angles['left_hip']}/{angles['right_hip']}", left_hip),
+                    (f"shoulder: {angles['left_shoulder']}/{angles['right_shoulder']}", shoulder),
+                ]
         else:
-            angle_texts = [
-                (f"knee: {angles['left_knee']}/{angles['right_knee']}", left_knee),
-                (f"hip: {angles['left_hip']}/{angles['right_hip']}", left_hip),
-                (f"elbow: {angles['left_elbow']}/{angles['right_elbow']}", elbow_r),
-                (f"shoulder: {angles['left_shoulder']}/{angles['right_shoulder']}", shoulder),
-            ]
+            if left_side_only:
+                angle_texts = [
+                    (f"knee: {angles['left_knee']}", left_knee),
+                    (f"hip: {angles['left_hip']}", left_hip),
+                    (f"elbow: {angles['left_elbow']}", elbow),
+                    (f"shoulder: {angles['left_shoulder']}", shoulder),
+                ]
+            else:
+                angle_texts = [
+                    (f"knee: {angles['left_knee']}/{angles['right_knee']}", left_knee),
+                    (f"hip: {angles['left_hip']}/{angles['right_hip']}", left_hip),
+                    (f"elbow: {angles['left_elbow']}/{angles['right_elbow']}", elbow_r),
+                    (f"shoulder: {angles['left_shoulder']}/{angles['right_shoulder']}", shoulder),
+                ]
         
         for text, pos in angle_texts:
             cv2.putText(
@@ -846,7 +885,7 @@ def main():
         st.set_page_config(page_title="Handstand Analyzer", page_icon="🤸")
         
         st.header("🤸 Handstand Analyzer")
-        st.write("**Cloud Run Edition** - version 131225aa")
+        st.write("**Cloud Run Edition** - version 131225ab")
         
         # Show Cloud Run tips
         with st.expander("ℹ️ How it works"):
