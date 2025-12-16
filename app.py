@@ -301,16 +301,26 @@ def process_frame(image, pose, mp_pose, mp_drawing, drawing_spec, drawing_spec_p
             wrist_r_ = get_landmark('RIGHT_WRIST')
             idx = get_landmark('LEFT_INDEX')
             idx_r = get_landmark('RIGHT_INDEX')
-            wrist= [(wrist_.x + idx.x) / 2, (wrist.y + idx.y) / 2]
-            wrist_r= [(wrist_r_.x + idx_r.x) / 2, (wrist_r_.y + idx_r.y) / 2]
+            wrist= [(wrist_[0] + idx[0]) / 2, (wrist[1] + idx[1]) / 2]
+            wrist_r= [(wrist_r_[0] + idx_r[0]) / 2, (wrist_r_[1] + idx_r[1]) / 2]
         else:
             wrist = get_landmark('LEFT_WRIST')
             wrist_r = get_landmark('RIGHT_WRIST')
         # Hide face landmarks
-        face_landmarks = ['LEFT_EYE', 'RIGHT_EYE', 'LEFT_EYE_INNER', 'RIGHT_EYE_INNER', 
+        hide_landmarks = ['LEFT_EYE', 'RIGHT_EYE', 'LEFT_EYE_INNER', 'RIGHT_EYE_INNER', 
                          'LEFT_EYE_OUTER', 'RIGHT_EYE_OUTER', 'NOSE', 'MOUTH_LEFT', 
-                         'MOUTH_RIGHT', 'LEFT_EAR', 'RIGHT_EAR', 'LEFT_SHOULDER', 'RIGHT_SHOULDER']
-        for lm_name in face_landmarks:
+                         'MOUTH_RIGHT', 'LEFT_EAR', 'RIGHT_EAR', 'LEFT_SHOULDER', 'RIGHT_SHOULDER',
+                           "LEFT_PINKY",
+                            "RIGHT_PINKY",
+                            "LEFT_INDEX",
+                            "RIGHT_INDEX",
+                            "LEFT_THUMB",
+                            "RIGHT_THUMB",
+                            "LEFT_HEEL",
+                            "RIGHT_HEEL",
+                            "LEFT_FOOT_INDEX",
+                            "RIGHT_FOOT_INDEX"]
+        for lm_name in hide_landmarks:
             landmarks[mp_pose.PoseLandmark[lm_name].value].visibility = 0
 
         # Calculate angles
@@ -901,7 +911,7 @@ def main():
         st.set_page_config(page_title="Handstand Analyzer", page_icon="🤸")
         
         st.header("🤸 Handstand Analyzer")
-        st.write("**Cloud Run Edition** - version 131225ae")
+        st.write("**Cloud Run Edition** - version 131225af")
         
         # Show Cloud Run tips
         with st.expander("ℹ️ How it works"):
