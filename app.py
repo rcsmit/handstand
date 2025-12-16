@@ -54,6 +54,9 @@ def calculate_joint_score_lineair(actual_angle, ideal_angle):
     score = max(0, 100 - (deviation * 2))
     return score
 
+def midpoint(a, b):
+    return [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2]
+
 
 
 def calculate_joint_score(angle, ideal_angle):
@@ -258,6 +261,11 @@ def process_frame(image, pose, mp_pose, mp_drawing, drawing_spec, drawing_spec_p
             lm = landmarks[mp_pose.PoseLandmark[name].value]
             return [lm.x, lm.y]
 
+        def get_hand_center(landmarks):
+            idx = landmarks[5]   # Index MCP
+            pnk = landmarks[17]  # Pinky MCP
+            return midpoint((idx.x, idx.y), (pnk.x, pnk.y))
+
         shoulder = get_landmark('LEFT_SHOULDER')
         #shoulder_r = get_landmark('RIGHT_SHOULDER')
         elbow = get_landmark('LEFT_ELBOW')
@@ -270,6 +278,10 @@ def process_frame(image, pose, mp_pose, mp_drawing, drawing_spec, drawing_spec_p
         #right_knee = get_landmark('RIGHT_KNEE')
         left_ankle = get_landmark('LEFT_ANKLE')
         #right_ankle = get_landmark('RIGHT_ANKLE')
+        hand_center = get_hand_center(lm)
+        left_hand = get_hand_center(landmarks)
+        right_hand = get_hand_center(landmarks)
+
 
         # Hide face landmarks
         face_landmarks = ['LEFT_EYE', 'RIGHT_EYE', 'LEFT_EYE_INNER', 'RIGHT_EYE_INNER', 
@@ -280,8 +292,11 @@ def process_frame(image, pose, mp_pose, mp_drawing, drawing_spec, drawing_spec_p
 
         # Calculate angles
         angles = {
-            'left_arm': int(calculate_angle(shoulder, elbow, wrist)),
-            #'right_arm': int(calculate_angle(shoulder_r, elbow_r, wrist_r)),
+            # 'left_arm': int(calculate_angle(shoulder, elbow, wrist)),
+            # #'right_arm': int(calculate_angle(shoulder_r, elbow_r, wrist_r)),
+            'left_arm': int(calculate_angle(shoulder, elbow, left_hand)),
+            #'right_arm': int(calculate_angle(shoulder_r, elbow_r, right_hand)),
+
             'left_leg': int(calculate_angle(left_hip, left_knee, left_ankle)),
             #'right_leg': int(calculate_angle(right_hip, right_knee, right_ankle)),
             'left_shoulder': int(calculate_angle(left_hip, shoulder, elbow)),
@@ -292,6 +307,8 @@ def process_frame(image, pose, mp_pose, mp_drawing, drawing_spec, drawing_spec_p
             #'right_elbow': int(calculate_angle(shoulder_r, elbow_r, wrist_r)),
             'left_knee': int(calculate_angle(left_hip, left_knee, left_ankle)),
             #'right_knee': int(calculate_angle(right_hip, right_knee, right_ankle))
+            
+           
         }
 
         # Draw lines (vectorized)
@@ -300,7 +317,9 @@ def process_frame(image, pose, mp_pose, mp_drawing, drawing_spec, drawing_spec_p
             #(right_ankle, right_knee, line_color_r),
             (left_hip, left_knee, line_color),
             #(right_hip, right_knee, line_color_r),
-            (wrist, elbow, line_color),
+            # (wrist, elbow, line_color),
+            # #(wrist_r, elbow_r, line_color_b),
+            (left_hand, elbow, line_color),
             #(wrist_r, elbow_r, line_color_b),
             (shoulder, elbow, line_color),
             #(shoulder_r, elbow_r, line_color_r),
@@ -710,7 +729,7 @@ def main():
         st.set_page_config(page_title="Handstand Analyzer", page_icon="🤸")
         
         st.header("🤸 Handstand Analyzer")
-        st.write("**Cloud Run Edition** - version 141225k")
+        st.write("**Cloud Run Edition** - version 161225a")
         
         # Show Cloud Run tips
         with st.expander("ℹ️ How it works"):
