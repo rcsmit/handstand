@@ -262,7 +262,8 @@ def process_frame(image, pose, mp_pose, mp_drawing, drawing_spec, drawing_spec_p
             return [lm.x, lm.y]
 
         def get_hand_center(landmarks):
-            idx = landmarks[5]   # Index MCP
+            #idx = landmarks[5]   # Index MCP
+            idx = landmarks[15]   # wrist
             pnk = landmarks[17]  # Pinky MCP
             return midpoint((idx.x, idx.y), (pnk.x, pnk.y))
 
@@ -547,8 +548,8 @@ def run(run_streamlit, stframe, filetype, input_file, output_file, detection_con
     line_color_g = (0, 255, 0)
     line_color = (255, 255, 255)
     
-    drawing_spec = mp_drawing.DrawingSpec(thickness=3, circle_radius=2, color=line_color_g)
-    drawing_spec_points = mp_drawing.DrawingSpec(thickness=3, circle_radius=2, color=line_color)
+    # drawing_spec = mp_drawing.DrawingSpec(thickness=3, circle_radius=2, color=line_color_g)
+    # drawing_spec_points = mp_drawing.DrawingSpec(thickness=3, circle_radius=2, color=line_color)
 
     if filetype == "video":
         vid = cv2.VideoCapture(input_file)
@@ -748,7 +749,7 @@ def main():
         st.set_page_config(page_title="Handstand Analyzer", page_icon="🤸")
         
         st.header("🤸 Handstand Analyzer")
-        st.write("**Cloud Run Edition** - version 161225h")
+        st.write("**Cloud Run Edition** - version 161225i")
         
         # Show Cloud Run tips
         with st.expander("ℹ️ How it works"):
