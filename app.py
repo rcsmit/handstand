@@ -454,12 +454,14 @@ def process_frame(image, pose, mp_pose, mp_drawing, drawing_spec, drawing_spec_p
         # Convert back and draw landmarks
         image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
         
+        # mp_drawing.draw_landmarks(
+        #     image, results.pose_landmarks, mp_pose.POSE_CONNECTIONS,
+        #     drawing_spec_points, connection_drawing_spec=drawing_spec
+        # )
         mp_drawing.draw_landmarks(
-            image, results.pose_landmarks, mp_pose.POSE_CONNECTIONS,
-            drawing_spec_points, connection_drawing_spec=drawing_spec
+            image, results.pose_landmarks
         )
-        mp_pose.POSE_CONNECTIONS.clear()
-
+        
         # Resize for display
         final_frame = cv2.resize(image, (0, 0), fx=0.5, fy=0.5)
         
@@ -899,7 +901,7 @@ def main():
         st.set_page_config(page_title="Handstand Analyzer", page_icon="🤸")
         
         st.header("🤸 Handstand Analyzer")
-        st.write("**Cloud Run Edition** - version 131225ad")
+        st.write("**Cloud Run Edition** - version 131225ae")
         
         # Show Cloud Run tips
         with st.expander("ℹ️ How it works"):
