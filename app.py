@@ -711,7 +711,7 @@ def run(run_streamlit, stframe, filetype, input_file, output_file, detection_con
                 
                 # Show image
                 st.subheader("📸 Analyzed Image")
-                stframe.image(final_frame, channels="BGR", use_container_width=True)
+                stframe.image(final_frame, channels="BGR")
                 
                 # Offer download
                 output_path = '/tmp/output.jpg'
@@ -746,7 +746,7 @@ def main():
         st.set_page_config(page_title="Handstand Analyzer", page_icon="🤸")
         
         st.header("🤸 Handstand Analyzer")
-        st.write("**Cloud Run Edition** - version 161225c")
+        st.write("**Cloud Run Edition** - version 161225d")
         
         # Show Cloud Run tips
         with st.expander("ℹ️ How it works"):
