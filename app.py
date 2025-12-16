@@ -263,8 +263,11 @@ def process_frame(image, pose, mp_pose, mp_drawing, drawing_spec, drawing_spec_p
 
         def get_hand_center(landmarks):
             #idx = landmarks[5]   # Index MCP
-            idx = landmarks[15]   # wrist
-            pnk = landmarks[17]  # Pinky MCP
+            # idx = landmarks[15]   # wrist
+            # pnk = landmarks[17]  # Pinky MCP
+            pnk = get_landmark("LEFT_PINKY")
+            idx = get_landmark("LEFT_WRIST")
+
             return midpoint((idx.x, idx.y), (pnk.x, pnk.y))
 
         shoulder = get_landmark('LEFT_SHOULDER')
@@ -753,7 +756,7 @@ def main():
         st.set_page_config(page_title="Handstand Analyzer", page_icon="🤸")
         
         st.header("🤸 Handstand Analyzer")
-        st.write("**Cloud Run Edition** - version 161225k")
+        st.write("**Cloud Run Edition** - version 161225l")
         
         # Show Cloud Run tips
         with st.expander("ℹ️ How it works"):
