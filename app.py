@@ -661,19 +661,23 @@ def run(run_streamlit, stframe, filetype, input_file, output_file, detection_con
                     if left_side_only:
                         st.write("**Joint Scores (Left Side):**")
                         for joint, score in form_scores.items():
-                            st.progress(score/100, text=f"{joint.capitalize()}: {score:.0f}/100")
+                            if not use_wrist_shoulder_hip and joint!="elbow":
+                                st.progress(score/100, text=f"{joint.capitalize()}: {score:.0f}/100")
                     else:
                         col1, col2 = st.columns(2)
                         
                         with col1:
                             st.write("**Joint Scores:**")
                             for joint, score in form_scores.items():
-                                st.progress(score/100, text=f"{joint.capitalize()}: {score:.0f}/100")
-                        
+                                if not use_wrist_shoulder_hip and joint!="elbow":
+                                    st.progress(score/100, text=f"{joint.capitalize()}: {score:.0f}/100")
+                                
                         with col2:
                             st.write("**Symmetry Scores:**")
+                            
                             for joint, score in symmetry_scores.items():
-                                st.progress(score/100, text=f"{joint.capitalize()}: {score:.0f}/100")
+                                if not use_wrist_shoulder_hip and joint!="elbow":
+                                    st.progress(score/100, text=f"{joint.capitalize()}: {score:.0f}/100")
                 
                 # Feedback
                 st.subheader("💬 Feedback & Tips")
@@ -947,7 +951,7 @@ def main_():
         st.set_page_config(page_title="Handstand Analyzer", page_icon="🤸")
         
         st.header("🤸 Handstand Analyzer")
-        st.write("**Cloud Run Edition** - version 181225a")
+        st.write("**Cloud Run Edition** - version 181225b")
         
        
 
