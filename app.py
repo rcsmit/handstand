@@ -1035,7 +1035,7 @@ def main_():
 def main():
     tab1,tab2=st.tabs(["Main", "Info"])
     with tab1:
-        main()
+        main_()
     with tab2:
         info()
 
