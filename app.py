@@ -108,13 +108,13 @@ def calculate_symmetry_score(angles):
     avg_symmetry = sum(symmetry_scores.values()) / len(symmetry_scores)
     return avg_symmetry, symmetry_scores
 
-def generate_feedback(angles, form_scores, symmetry_scores):
+def generate_feedback(angles, form_scores, symmetry_scores,left_side_only, use_wrist_shoulder_hip):
     """Generate actionable feedback based on angles"""
     feedback = []
     
     # Check shoulders
     shoulder_angle = angles['left_shoulder']
-    if USE_LEFT_SIDE_ONLY:
+    if left_side_only:
         if shoulder_angle < 170:
             feedback.append("💡 Open your shoulder more - push through your hand and reach tall")
         elif shoulder_angle < 175:
@@ -129,28 +129,28 @@ def generate_feedback(angles, form_scores, symmetry_scores):
             feedback.append("👍 Good shoulder angle - try to open them a bit more")
         else:
             feedback.append("✨ Excellent shoulder position!")
-    
-    # Check elbows
-    elbow_angle = angles['left_elbow']
-    if USE_LEFT_SIDE_ONLY:
-        if elbow_angle < 170:
-            feedback.append("⚠️ Lock your elbow! Bent arm is dangerous and unstable")
-        elif elbow_angle < 178:
-            feedback.append("💪 Almost there - lock out that elbow completely")
+    if not use_wrist_shoulder_hip:
+        # Check elbows
+        elbow_angle = angles['left_elbow']
+        if left_side_only:
+            if elbow_angle < 170:
+                feedback.append("⚠️ Lock your elbow! Bent arm is dangerous and unstable")
+            elif elbow_angle < 178:
+                feedback.append("💪 Almost there - lock out that elbow completely")
+            else:
+                feedback.append("✨ Perfect elbow lock!")
         else:
-            feedback.append("✨ Perfect elbow lock!")
-    else:
-        avg_elbow = (angles['left_elbow'] + angles['right_elbow']) / 2
-        if avg_elbow < 170:
-            feedback.append("⚠️ Lock your elbows! Bent arms are dangerous and unstable")
-        elif avg_elbow < 178:
-            feedback.append("💪 Almost there - lock out those elbows completely")
-        else:
-            feedback.append("✨ Perfect elbow lock!")
+            avg_elbow = (angles['left_elbow'] + angles['right_elbow']) / 2
+            if avg_elbow < 170:
+                feedback.append("⚠️ Lock your elbows! Bent arms are dangerous and unstable")
+            elif avg_elbow < 178:
+                feedback.append("💪 Almost there - lock out those elbows completely")
+            else:
+                feedback.append("✨ Perfect elbow lock!")
     
     # Check hips
     hip_angle = angles['left_hip']
-    if USE_LEFT_SIDE_ONLY:
+    if left_side_only:
         if hip_angle < 165:
             feedback.append("💡 Squeeze your glutes and engage your core to straighten your body")
         elif hip_angle < 175:
@@ -168,7 +168,7 @@ def generate_feedback(angles, form_scores, symmetry_scores):
     
     # Check knees
     knee_angle = angles['left_knee']
-    if USE_LEFT_SIDE_ONLY:
+    if left_side_only:
         if knee_angle < 170:
             feedback.append("💡 Straighten your leg - point your toes")
         elif knee_angle < 178:
@@ -185,7 +185,7 @@ def generate_feedback(angles, form_scores, symmetry_scores):
             feedback.append("✨ Perfect leg extension!")
     
     # Check symmetry only if analyzing both sides
-    if not USE_LEFT_SIDE_ONLY:
+    if not left_side_only:
         for joint in ['shoulder', 'elbow', 'hip', 'knee']:
             if symmetry_scores[joint] < 85:
                 left = angles[f'left_{joint}']
@@ -500,7 +500,7 @@ def show_analysis(angles, left_side_only, use_wrist_shoulder_hip):
     # Calculate scores
     total_score, form_scores = calculate_handstand_score(angles)
     symmetry_score, symmetry_scores = calculate_symmetry_score(angles)
-    feedback = generate_feedback(angles, form_scores, symmetry_scores)
+    feedback = generate_feedback(angles, form_scores, symmetry_scores,left_side_only, use_wrist_shoulder_hip)
     
     st.subheader("🏆 Handstand Analysis")
     
@@ -527,16 +527,16 @@ def _display_angle_measurements(angles, left_side_only, use_wrist_shoulder_hip):
     if use_wrist_shoulder_hip:
         joints.remove('elbow')
     
-    with st.expander("🔢 Measured Angles"):
-        if left_side_only:
-            cols = st.columns(2)
-            _display_side_angles(cols[0], angles, 'left', joints,use_wrist_shoulder_hip)
-            _display_weight_factors(cols[1], joints,use_wrist_shoulder_hip)
-        else:
-            cols = st.columns(3)
-            _display_side_angles(cols[0], angles, 'left', joints,use_wrist_shoulder_hip)
-            _display_side_angles(cols[1], angles, 'right', joints,use_wrist_shoulder_hip)
-            _display_weight_factors(cols[2], joints,use_wrist_shoulder_hip)
+
+    if left_side_only:
+        cols = st.columns(2)
+        _display_side_angles(cols[0], angles, 'left', joints,use_wrist_shoulder_hip)
+        _display_weight_factors(cols[1], joints,use_wrist_shoulder_hip)
+    else:
+        cols = st.columns(3)
+        _display_side_angles(cols[0], angles, 'left', joints,use_wrist_shoulder_hip)
+        _display_side_angles(cols[1], angles, 'right', joints,use_wrist_shoulder_hip)
+        _display_weight_factors(cols[2], joints,use_wrist_shoulder_hip)
 
 
 def _display_side_angles(col, angles, side, joints,use_wrist_shoulder_hip):
@@ -984,7 +984,7 @@ def main_():
         st.set_page_config(page_title="Handstand Analyzer", page_icon="🤸")
         
         st.header("🤸 Handstand Analyzer")
-        st.write("**Cloud Run Edition** - version 181225e")
+        st.write("**Cloud Run Edition** - version 181225f")
         
        
 
