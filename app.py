@@ -494,58 +494,74 @@ def process_frame(image, pose, mp_pose, mp_drawing, drawing_spec, drawing_spec_p
         # Force garbage collection
         gc.collect()
 
-def show_analysis(angles,left_side_only,use_wrist_shoulder_hip):
+def show_analysis(angles, left_side_only, use_wrist_shoulder_hip):
+    """Display comprehensive handstand analysis with scores and feedback."""
     
+    # Calculate scores
     total_score, form_scores = calculate_handstand_score(angles)
     symmetry_score, symmetry_scores = calculate_symmetry_score(angles)
     feedback = generate_feedback(angles, form_scores, symmetry_scores)
     
-    # Display scores
     st.subheader("🏆 Handstand Analysis")
     
-    # Angle details
+    # Display angle measurements
+    _display_angle_measurements(angles, left_side_only, use_wrist_shoulder_hip)
+    
+    # Display score metrics
+    _display_score_metrics(total_score, symmetry_score, left_side_only)
+    
+    # Display grade
+    _display_grade(total_score, symmetry_score, left_side_only)
+    
+    # Display detailed breakdown
+    _display_detailed_breakdown(form_scores, symmetry_scores, left_side_only, use_wrist_shoulder_hip)
+    
+    # Display feedback
+    _display_feedback(feedback)
+
+
+def _display_angle_measurements(angles, left_side_only, use_wrist_shoulder_hip):
+    """Display measured angles in an expandable section."""
+    
+    joints = ['shoulder', 'elbow', 'hip', 'knee']
+    if use_wrist_shoulder_hip:
+        joints.remove('elbow')
+    
     with st.expander("🔢 Measured Angles"):
         if left_side_only:
             cols = st.columns(2)
-            with cols[0]:
-                st.write("**Left Side:**")
-                st.write(f"Shoulder: {angles['left_shoulder']}° (ideal: 180°)")
-                if not use_wrist_shoulder_hip:
-                    st.write(f"Elbow: {angles['left_elbow']}° (ideal: 180°)")
-                st.write(f"Hip: {angles['left_hip']}° (ideal: 180°)")
-                st.write(f"Knee: {angles['left_knee']}° (ideal: 180°)")
-            with cols[1]:
-                st.write("**Weight factor**")
-                st.write(f"Shoulder: {WEIGHTS['shoulder']}")
-                if not use_wrist_shoulder_hip:
-                    st.write(f"Elbow: {WEIGHTS['elbow']}")
-                st.write(f"Hip: {WEIGHTS['hip']}")
-                st.write(f"Knee: {WEIGHTS['knee']}")
+            _display_side_angles(cols[0], angles, 'left', joints,use_wrist_shoulder_hip)
+            _display_weight_factors(cols[1], joints,use_wrist_shoulder_hip)
         else:
             cols = st.columns(3)
-            with cols[0]:
-                st.write("**Left Side:**")
-                st.write(f"Shoulder: {angles['left_shoulder']}° (ideal: 180°)")
-                if not use_wrist_shoulder_hip:
-                    st.write(f"Elbow: {angles['left_elbow']}° (ideal: 180°)")
-                st.write(f"Hip: {angles['left_hip']}° (ideal: 180°)")
-                st.write(f"Knee: {angles['left_knee']}° (ideal: 180°)")
-            with cols[1]:
-                st.write("**Right Side:**")
-                st.write(f"Shoulder: {angles['right_shoulder']}° (ideal: 180°)")
-                if not use_wrist_shoulder_hip:
-                    st.write(f"Elbow: {angles['right_elbow']}° (ideal: 180°)")
-                st.write(f"Hip: {angles['right_hip']}° (ideal: 180°)")
-                st.write(f"Knee: {angles['right_knee']}° (ideal: 180°)")
-            with cols[2]:
-                st.write("**Weight factor**")
-                st.write(f"Shoulder: {WEIGHTS['shoulder']}")
-                if not use_wrist_shoulder_hip:
-                    st.write(f"Elbow: {WEIGHTS['elbow']}")
-                st.write(f"Hip: {WEIGHTS['hip']}")
-                st.write(f"Knee: {WEIGHTS['knee']}")
+            _display_side_angles(cols[0], angles, 'left', joints,use_wrist_shoulder_hip)
+            _display_side_angles(cols[1], angles, 'right', joints,use_wrist_shoulder_hip)
+            _display_weight_factors(cols[2], joints,use_wrist_shoulder_hip)
 
-    # Overall score
+
+def _display_side_angles(col, angles, side, joints,use_wrist_shoulder_hip):
+    """Display angles for one side of the body."""
+    with col:
+        st.write(f"**{side.capitalize()} Side:**")
+        for joint in joints:
+            if use_wrist_shoulder_hip and joint == "elbow":
+                continue
+            angle_key = f"{side}_{joint}"
+            st.write(f"{joint.capitalize()}: {angles[angle_key]}° (ideal: 180°)")
+
+
+def _display_weight_factors(col, joints, use_wrist_shoulder_hip):
+    """Display weight factors for each joint."""
+    with col:
+        st.write("**Weight factor**")
+        for joint in joints:
+            if use_wrist_shoulder_hip and joint == "elbow":
+                continue
+            st.write(f"{joint.capitalize()}: {WEIGHTS[joint]}")
+
+
+def _display_score_metrics(total_score, symmetry_score, left_side_only):
+    """Display score metrics based on analysis mode."""
     if left_side_only:
         col1, col2 = st.columns(2)
         with col1:
@@ -559,57 +575,64 @@ def show_analysis(angles,left_side_only,use_wrist_shoulder_hip):
         with col2:
             st.metric("Symmetry Score", f"{symmetry_score:.1f}/100")
         with col3:
-            # combined = (total_score * 0.7 + symmetry_score * 0.3)
-            combined = (total_score * COMBINED_FACTOR + symmetry_score * (1-COMBINED_FACTOR))
-        
+            combined = total_score * COMBINED_FACTOR + symmetry_score * (1 - COMBINED_FACTOR)
             st.metric("Overall Score", f"{combined:.1f}/100")
+
+
+def _display_grade(total_score, symmetry_score, left_side_only):
+    """Display performance grade with color coding."""
     
-    # Grade
-    score_to_grade = total_score if left_side_only else combined
-    if score_to_grade >= 90:
-        grade = "⭐⭐⭐⭐⭐ EXCELLENT"
-        grade_color = "green"
-    elif score_to_grade >= 80:
-        grade = "⭐⭐⭐⭐ GREAT"
-        grade_color = "blue"
-    elif score_to_grade >= 70:
-        grade = "⭐⭐⭐ GOOD"
-        grade_color = "orange"
-    elif score_to_grade >= 60:
-        grade = "⭐⭐ FAIR"
-        grade_color = "orange"
-    else:
-        grade = "⭐ NEEDS WORK"
-        grade_color = "red"
+    score_to_grade = total_score if left_side_only else (
+        total_score * COMBINED_FACTOR + symmetry_score * (1 - COMBINED_FACTOR)
+    )
     
-    st.markdown(f"### :{grade_color}[{grade}]")
+    # Grade thresholds
+    grade_levels = [
+        (90, "⭐⭐⭐⭐⭐ EXCELLENT", "green"),
+        (80, "⭐⭐⭐⭐ GREAT", "blue"),
+        (70, "⭐⭐⭐ GOOD", "orange"),
+        (60, "⭐⭐ FAIR", "orange"),
+        (0, "⭐ NEEDS WORK", "red")
+    ]
     
-    # Detailed breakdown
+    for threshold, grade, color in grade_levels:
+        if score_to_grade >= threshold:
+            st.markdown(f"### :{color}[{grade}]")
+            break
+
+
+def _display_detailed_breakdown(form_scores, symmetry_scores, left_side_only, use_wrist_shoulder_hip):
+    """Display detailed score breakdown for each joint."""
+    
     with st.expander("📊 Detailed Breakdown", expanded=True):
         if left_side_only:
             st.write("**Joint Scores (Left Side):**")
-            for joint, score in form_scores.items():
-                if not use_wrist_shoulder_hip and joint!="elbow":
-                    st.progress(score/100, text=f"{joint.capitalize()}: {score:.0f}/100")
+            _display_joint_scores(form_scores, use_wrist_shoulder_hip)
         else:
             col1, col2 = st.columns(2)
-            
             with col1:
                 st.write("**Joint Scores:**")
-                for joint, score in form_scores.items():
-                    if not use_wrist_shoulder_hip and joint!="elbow":
-                        st.progress(score/100, text=f"{joint.capitalize()}: {score:.0f}/100")
-            
+                _display_joint_scores(form_scores, use_wrist_shoulder_hip)
             with col2:
                 st.write("**Symmetry Scores:**")
-                for joint, score in symmetry_scores.items():
-                    if not use_wrist_shoulder_hip and joint!="elbow":
-                        st.progress(score/100, text=f"{joint.capitalize()}: {score:.0f}/100")
-    
-    # Feedback
+                _display_joint_scores(symmetry_scores, use_wrist_shoulder_hip)
+
+
+def _display_joint_scores(scores, use_wrist_shoulder_hip):
+    """Display progress bars for joint scores."""
+    for joint, score in scores.items():
+        if use_wrist_shoulder_hip and joint == "elbow":
+            continue
+        st.progress(score / 100, text=f"{joint.capitalize()}: {score:.0f}/100")
+
+
+def _display_feedback(feedback):
+    """Display feedback tips."""
     st.subheader("💬 Feedback & Tips")
     for tip in feedback:
         st.write(tip)
+
+
 def run(run_streamlit, stframe, filetype, input_file, output_file, detection_confidence, tracking_confidence, complexity, rotate, text_color,show_live=True, use_wrist_shoulder_hip=False, left_side_only=False):
     
     mp_pose, mp_drawing = setup_mediapipe()
@@ -961,7 +984,7 @@ def main_():
         st.set_page_config(page_title="Handstand Analyzer", page_icon="🤸")
         
         st.header("🤸 Handstand Analyzer")
-        st.write("**Cloud Run Edition** - version 181225d")
+        st.write("**Cloud Run Edition** - version 181225e")
         
        
 
