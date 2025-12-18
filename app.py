@@ -944,7 +944,7 @@ def main_():
         st.set_page_config(page_title="Handstand Analyzer", page_icon="🤸")
         
         st.header("🤸 Handstand Analyzer")
-        st.write("**Cloud Run Edition** - version 131225ai")
+        st.write("**Cloud Run Edition** - version 181225a")
         
        
 
