@@ -921,7 +921,7 @@ def check_streamlit():
 def right(s, amount):
     return s[-amount:]
 
-def info():
+def show_info():
      # Show Cloud Run tips
     st.subheader("ℹ️ How it works")
     st.markdown("""
@@ -955,14 +955,14 @@ def main_():
         col1,col2 = st.columns(2)
         with col1:
             # Shoulder angle calculation method
-            use_wrist_shoulder_hip = st.sidebar.checkbox(
+            use_wrist_shoulder_hip = st.checkbox(
                 "Use wrist→shoulder→hip angle", 
                 value=USE_WRIST_SHOULDER_HIP,
                 help="Alternative shoulder angle: measures shoulder elevation/opening using wrist→shoulder→hip instead of hip→shoulder→elbow"
             )
         with col2:
             # Side selection
-            left_side_only = st.sidebar.checkbox(
+            left_side_only = st.checkbox(
                 "Analyze left side only",
                 value=USE_LEFT_SIDE_ONLY,
                 help="Only analyze and display left side angles (ignores right side)"
@@ -1037,7 +1037,7 @@ def main():
     with tab1:
         main_()
     with tab2:
-        info()
+        show_info()
 
 if __name__ == '__main__':
     main()
