@@ -788,6 +788,48 @@ def run(run_streamlit, stframe, filetype, input_file, output_file, detection_con
                     # Display scores
                     st.subheader("🏆 Handstand Analysis")
                     
+                    # Angle details
+                    with st.expander("🔢 Measured Angles"):
+                        if left_side_only:
+                            cols = st.columns(2)
+                            with cols[0]:
+                                st.write("**Left Side:**")
+                                st.write(f"Shoulder: {angles['left_shoulder']}° (ideal: 180°)")
+                                if not use_wrist_shoulder_hip:
+                                    st.write(f"Elbow: {angles['left_elbow']}° (ideal: 180°)")
+                                st.write(f"Hip: {angles['left_hip']}° (ideal: 180°)")
+                                st.write(f"Knee: {angles['left_knee']}° (ideal: 180°)")
+                            with cols[1]:
+                                st.write("**Weight factor**")
+                                st.write(f"Shoulder: {WEIGHTS['shoulder']}")
+                                if not use_wrist_shoulder_hip:
+                                    st.write(f"Elbow: {WEIGHTS['elbow']}")
+                                st.write(f"Hip: {WEIGHTS['hip']}")
+                                st.write(f"Knee: {WEIGHTS['knee']}")
+                        else:
+                            cols = st.columns(3)
+                            with cols[0]:
+                                st.write("**Left Side:**")
+                                st.write(f"Shoulder: {angles['left_shoulder']}° (ideal: 180°)")
+                                if not use_wrist_shoulder_hip:
+                                    st.write(f"Elbow: {angles['left_elbow']}° (ideal: 180°)")
+                                st.write(f"Hip: {angles['left_hip']}° (ideal: 180°)")
+                                st.write(f"Knee: {angles['left_knee']}° (ideal: 180°)")
+                            with cols[1]:
+                                st.write("**Right Side:**")
+                                st.write(f"Shoulder: {angles['right_shoulder']}° (ideal: 180°)")
+                                if not use_wrist_shoulder_hip:
+                                    st.write(f"Elbow: {angles['right_elbow']}° (ideal: 180°)")
+                                st.write(f"Hip: {angles['right_hip']}° (ideal: 180°)")
+                                st.write(f"Knee: {angles['right_knee']}° (ideal: 180°)")
+                            with cols[2]:
+                                st.write("**Weight factor**")
+                                st.write(f"Shoulder: {WEIGHTS['shoulder']}")
+                                if not use_wrist_shoulder_hip:
+                                    st.write(f"Elbow: {WEIGHTS['elbow']}")
+                                st.write(f"Hip: {WEIGHTS['hip']}")
+                                st.write(f"Knee: {WEIGHTS['knee']}")
+                
                     # Overall score
                     if left_side_only:
                         col1, col2 = st.columns(2)
@@ -851,48 +893,7 @@ def run(run_streamlit, stframe, filetype, input_file, output_file, detection_con
                     for tip in feedback:
                         st.write(tip)
                     
-                    # Angle details
-                    with st.expander("🔢 Measured Angles"):
-                        if left_side_only:
-                            cols = st.columns(2)
-                            with cols[0]:
-                                st.write("**Left Side:**")
-                                st.write(f"Shoulder: {angles['left_shoulder']}° (ideal: 180°)")
-                                if not use_wrist_shoulder_hip:
-                                    st.write(f"Elbow: {angles['left_elbow']}° (ideal: 180°)")
-                                st.write(f"Hip: {angles['left_hip']}° (ideal: 180°)")
-                                st.write(f"Knee: {angles['left_knee']}° (ideal: 180°)")
-                            with cols[1]:
-                                st.write("**Weight factor**")
-                                st.write(f"Shoulder: {WEIGHTS['shoulder']}")
-                                if not use_wrist_shoulder_hip:
-                                    st.write(f"Elbow: {WEIGHTS['elbow']}")
-                                st.write(f"Hip: {WEIGHTS['hip']}")
-                                st.write(f"Knee: {WEIGHTS['knee']}")
-                        else:
-                            cols = st.columns(3)
-                            with cols[0]:
-                                st.write("**Left Side:**")
-                                st.write(f"Shoulder: {angles['left_shoulder']}° (ideal: 180°)")
-                                if not use_wrist_shoulder_hip:
-                                    st.write(f"Elbow: {angles['left_elbow']}° (ideal: 180°)")
-                                st.write(f"Hip: {angles['left_hip']}° (ideal: 180°)")
-                                st.write(f"Knee: {angles['left_knee']}° (ideal: 180°)")
-                            with cols[1]:
-                                st.write("**Right Side:**")
-                                st.write(f"Shoulder: {angles['right_shoulder']}° (ideal: 180°)")
-                                if not use_wrist_shoulder_hip:
-                                    st.write(f"Elbow: {angles['right_elbow']}° (ideal: 180°)")
-                                st.write(f"Hip: {angles['right_hip']}° (ideal: 180°)")
-                                st.write(f"Knee: {angles['right_knee']}° (ideal: 180°)")
-                            with cols[2]:
-                                st.write("**Weight factor**")
-                                st.write(f"Shoulder: {WEIGHTS['shoulder']}")
-                                if not use_wrist_shoulder_hip:
-                                    st.write(f"Elbow: {WEIGHTS['elbow']}")
-                                st.write(f"Hip: {WEIGHTS['hip']}")
-                                st.write(f"Knee: {WEIGHTS['knee']}")
-                
+                    
                 # Show image
                 st.subheader("📸 Analyzed Image")
                 stframe.image(final_frame, channels="BGR", use_container_width=True)
