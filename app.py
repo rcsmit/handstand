@@ -685,13 +685,15 @@ def run(run_streamlit, stframe, filetype, input_file, output_file, detection_con
                         with cols[0]:
                             st.write("**Left Side:**")
                             st.write(f"Shoulder: {avg_angles['left_shoulder']:.1f}° (ideal: 180°)")
-                            st.write(f"Elbow: {avg_angles['left_elbow']:.1f}° (ideal: 180°)")
+                            if not use_wrist_shoulder_hip:
+                                st.write(f"Elbow: {avg_angles['left_elbow']:.1f}° (ideal: 180°)")
                             st.write(f"Hip: {avg_angles['left_hip']:.1f}° (ideal: 180°)")
                             st.write(f"Knee: {avg_angles['left_knee']:.1f}° (ideal: 180°)")
                         with cols[1]:
                             st.write("**Weight factor**")
                             st.write(f"Shoulder: {WEIGHTS['shoulder']}")
-                            st.write(f"Elbow: {WEIGHTS['elbow']}")
+                            if not use_wrist_shoulder_hip:
+                                st.write(f"Elbow: {WEIGHTS['elbow']}")
                             st.write(f"Hip: {WEIGHTS['hip']}")
                             st.write(f"Knee: {WEIGHTS['knee']}")
                     else:
@@ -700,19 +702,24 @@ def run(run_streamlit, stframe, filetype, input_file, output_file, detection_con
                         with cols[0]:
                             st.write("**Left Side:**")
                             st.write(f"Shoulder: {avg_angles['left_shoulder']:.1f}° (ideal: 180°)")
-                            st.write(f"Elbow: {avg_angles['left_elbow']:.1f}° (ideal: 180°)")
+                            if not use_wrist_shoulder_hip:
+                                st.write(f"Elbow: {avg_angles['left_elbow']:.1f}° (ideal: 180°)")
                             st.write(f"Hip: {avg_angles['left_hip']:.1f}° (ideal: 180°)")
                             st.write(f"Knee: {avg_angles['left_knee']:.1f}° (ideal: 180°)")
                         with cols[1]:
                             st.write("**Right Side:**")
                             st.write(f"Shoulder: {avg_angles['right_shoulder']:.1f}° (ideal: 180°)")
-                            st.write(f"Elbow: {avg_angles['right_elbow']:.1f}° (ideal: 180°)")
+                            if not use_wrist_shoulder_hip:
+                                st.write(f"Elbow: {avg_angles['right_elbow']:.1f}° (ideal: 180°)")
                             st.write(f"Hip: {avg_angles['right_hip']:.1f}° (ideal: 180°)")
                             st.write(f"Knee: {avg_angles['right_knee']:.1f}° (ideal: 180°)")
                         with cols[2]:
                             st.write("**Weight factor**")
                             st.write(f"Shoulder: {WEIGHTS['shoulder']}")
-                            st.write(f"Elbow: {WEIGHTS['elbow']}")
+                            if not use_wrist_shoulder_hip:
+                                st.write(f"Elbow: {WEIGHTS['elbow']}")
+                            st.write(f"Hip: {WEIGHTS['hip']}")
+                            st.write(f"Knee: {WEIGHTS['knee']}")
             
             # Show final frame and download button
             if run_streamlit:
@@ -849,13 +856,15 @@ def run(run_streamlit, stframe, filetype, input_file, output_file, detection_con
                             with cols[0]:
                                 st.write("**Left Side:**")
                                 st.write(f"Shoulder: {angles['left_shoulder']}° (ideal: 180°)")
-                                st.write(f"Elbow: {angles['left_elbow']}° (ideal: 180°)")
+                                if not use_wrist_shoulder_hip:
+                                    st.write(f"Elbow: {angles['left_elbow']}° (ideal: 180°)")
                                 st.write(f"Hip: {angles['left_hip']}° (ideal: 180°)")
                                 st.write(f"Knee: {angles['left_knee']}° (ideal: 180°)")
                             with cols[1]:
                                 st.write("**Weight factor**")
                                 st.write(f"Shoulder: {WEIGHTS['shoulder']}")
-                                st.write(f"Elbow: {WEIGHTS['elbow']}")
+                                if not use_wrist_shoulder_hip:
+                                    st.write(f"Elbow: {WEIGHTS['elbow']}")
                                 st.write(f"Hip: {WEIGHTS['hip']}")
                                 st.write(f"Knee: {WEIGHTS['knee']}")
                         else:
@@ -863,19 +872,22 @@ def run(run_streamlit, stframe, filetype, input_file, output_file, detection_con
                             with cols[0]:
                                 st.write("**Left Side:**")
                                 st.write(f"Shoulder: {angles['left_shoulder']}° (ideal: 180°)")
-                                st.write(f"Elbow: {angles['left_elbow']}° (ideal: 180°)")
+                                if not use_wrist_shoulder_hip:
+                                    st.write(f"Elbow: {angles['left_elbow']}° (ideal: 180°)")
                                 st.write(f"Hip: {angles['left_hip']}° (ideal: 180°)")
                                 st.write(f"Knee: {angles['left_knee']}° (ideal: 180°)")
                             with cols[1]:
                                 st.write("**Right Side:**")
                                 st.write(f"Shoulder: {angles['right_shoulder']}° (ideal: 180°)")
-                                st.write(f"Elbow: {angles['right_elbow']}° (ideal: 180°)")
+                                if not use_wrist_shoulder_hip:
+                                    st.write(f"Elbow: {angles['right_elbow']}° (ideal: 180°)")
                                 st.write(f"Hip: {angles['right_hip']}° (ideal: 180°)")
                                 st.write(f"Knee: {angles['right_knee']}° (ideal: 180°)")
                             with cols[2]:
                                 st.write("**Weight factor**")
                                 st.write(f"Shoulder: {WEIGHTS['shoulder']}")
-                                st.write(f"Elbow: {WEIGHTS['elbow']}")
+                                if not use_wrist_shoulder_hip:
+                                    st.write(f"Elbow: {WEIGHTS['elbow']}")
                                 st.write(f"Hip: {WEIGHTS['hip']}")
                                 st.write(f"Knee: {WEIGHTS['knee']}")
                 
@@ -909,7 +921,23 @@ def check_streamlit():
 def right(s, amount):
     return s[-amount:]
 
-def main():
+def info():
+     # Show Cloud Run tips
+    st.subheader("ℹ️ How it works")
+    st.markdown("""
+    **This app analyzes your handstand form:**
+    1. Upload a video (MP4) or image (JPG)
+    2. AI detects your body pose
+    3. Calculates joint angles (shoulders, elbows, hips, knees)
+    4. Download the analyzed video with annotations
+    
+    **Cloud Run Optimizations:**
+    - ✅ Videos limited to 300 frames (~10 sec at 30fps)
+    - ✅ Processing every 2nd frame
+    - ✅ Reduced resolution for memory efficiency
+    - 💡 **Download the output video** to see all frames smoothly!
+    """)
+def main_():
     run_streamlit = check_streamlit()
     
     if run_streamlit:
@@ -918,39 +946,27 @@ def main():
         st.header("🤸 Handstand Analyzer")
         st.write("**Cloud Run Edition** - version 131225ai")
         
-        # Show Cloud Run tips
-        with st.expander("ℹ️ How it works"):
-            st.markdown("""
-            **This app analyzes your handstand form:**
-            1. Upload a video (MP4) or image (JPG)
-            2. AI detects your body pose
-            3. Calculates joint angles (shoulders, elbows, hips, knees)
-            4. Download the analyzed video with annotations
-            
-            **Cloud Run Optimizations:**
-            - ✅ Videos limited to 300 frames (~10 sec at 30fps)
-            - ✅ Processing every 2nd frame
-            - ✅ Reduced resolution for memory efficiency
-            - 💡 **Download the output video** to see all frames smoothly!
-            """)
+       
 
         detection_confidence = st.sidebar.number_input("Detection confidence", 0.0, 1.0, 0.5) 
         tracking_confidence = st.sidebar.number_input("Tracking confidence", 0.0, 1.0, 0.5) 
         rotate = st.sidebar.checkbox("Rotate 180°", False)
         
-        # Shoulder angle calculation method
-        use_wrist_shoulder_hip = st.sidebar.checkbox(
-            "Use wrist→shoulder→hip angle", 
-            value=USE_WRIST_SHOULDER_HIP,
-            help="Alternative shoulder angle: measures shoulder elevation/opening using wrist→shoulder→hip instead of hip→shoulder→elbow"
-        )
-        
-        # Side selection
-        left_side_only = st.sidebar.checkbox(
-            "Analyze left side only",
-            value=USE_LEFT_SIDE_ONLY,
-            help="Only analyze and display left side angles (ignores right side)"
-        )
+        col1,col2 = st.columns(2)
+        with col1:
+            # Shoulder angle calculation method
+            use_wrist_shoulder_hip = st.sidebar.checkbox(
+                "Use wrist→shoulder→hip angle", 
+                value=USE_WRIST_SHOULDER_HIP,
+                help="Alternative shoulder angle: measures shoulder elevation/opening using wrist→shoulder→hip instead of hip→shoulder→elbow"
+            )
+        with col2:
+            # Side selection
+            left_side_only = st.sidebar.checkbox(
+                "Analyze left side only",
+                value=USE_LEFT_SIDE_ONLY,
+                help="Only analyze and display left side angles (ignores right side)"
+            )
         
         # Processing mode
         processing_mode = st.sidebar.radio(
@@ -1015,6 +1031,13 @@ def main():
                 os.remove(input_file)
             except:
                 pass
+
+def main():
+    tab1,tab2=st.tabs(["Main", "Info"])
+    with tab1:
+        main()
+    with tab2:
+        info()
 
 if __name__ == '__main__':
     main()
