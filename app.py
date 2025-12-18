@@ -243,7 +243,7 @@ def process_frame(image, pose, mp_pose, mp_drawing, drawing_spec, drawing_spec_p
     line_color_r = (255, 0, 0)
     line_color_g = (0, 255, 0)
     line_color_b = (0, 0, 255)
-    if text_color="black":
+    if text_color=="black":
         text_color = (0, 0, 0)
     else:
         text_color = (255,255,255)
