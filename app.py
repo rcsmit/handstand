@@ -236,15 +236,17 @@ def setup_mediapipe():
     
     return mp.solutions.pose, mp.solutions.drawing_utils
 
-def process_frame(image, pose, mp_pose, mp_drawing, drawing_spec, drawing_spec_points, rotate, return_angles=False, use_wrist_shoulder_hip=False, left_side_only=False):
+def process_frame(image, pose, mp_pose, mp_drawing, drawing_spec, drawing_spec_points, rotate, text_color, return_angles=False, use_wrist_shoulder_hip=False, left_side_only=False):
     """Process a single frame with memory optimization"""
     
     line_color = (255, 255, 255)
     line_color_r = (255, 0, 0)
     line_color_g = (0, 255, 0)
     line_color_b = (0, 0, 255)
-    text_color = (0, 0, 0)
-    
+    if text_color="black":
+        text_color = (0, 0, 0)
+    else:
+        text_color = (255,255,255)
     try:
         # Resize to reduce memory usage
         h, w = image.shape[:2]
@@ -492,7 +494,7 @@ def process_frame(image, pose, mp_pose, mp_drawing, drawing_spec, drawing_spec_p
         # Force garbage collection
         gc.collect()
 
-def run(run_streamlit, stframe, filetype, input_file, output_file, detection_confidence, tracking_confidence, complexity, rotate, show_live=True, use_wrist_shoulder_hip=False, left_side_only=False):
+def run(run_streamlit, stframe, filetype, input_file, output_file, detection_confidence, tracking_confidence, complexity, rotate, text_color,show_live=True, use_wrist_shoulder_hip=False, left_side_only=False):
     
     mp_pose, mp_drawing = setup_mediapipe()
     
@@ -570,7 +572,7 @@ def run(run_streamlit, stframe, filetype, input_file, output_file, detection_con
                 # Process frame
                 result = process_frame(
                     image, pose, mp_pose, mp_drawing, 
-                    drawing_spec, drawing_spec_points, rotate, 
+                    drawing_spec, drawing_spec_points, rotate, text_color,
                     return_angles=True, use_wrist_shoulder_hip=use_wrist_shoulder_hip,
                     left_side_only=left_side_only
                 )
@@ -770,7 +772,7 @@ def run(run_streamlit, stframe, filetype, input_file, output_file, detection_con
             # Process image
             result = process_frame(
                 image, pose, mp_pose, mp_drawing,
-                drawing_spec, drawing_spec_points, rotate, 
+                drawing_spec, drawing_spec_points, rotate, text_color,
                 return_angles=True, use_wrist_shoulder_hip=use_wrist_shoulder_hip,
                 left_side_only=left_side_only
             )
@@ -952,7 +954,7 @@ def main_():
         tracking_confidence = st.sidebar.number_input("Tracking confidence", 0.0, 1.0, 0.5) 
         rotate = st.sidebar.checkbox("Rotate 180°", False)
         
-        col1,col2 = st.columns(2)
+        col1,col2,col3= st.columns(3)
         with col1:
             # Shoulder angle calculation method
             use_wrist_shoulder_hip = st.checkbox(
@@ -967,6 +969,10 @@ def main_():
                 value=USE_LEFT_SIDE_ONLY,
                 help="Only analyze and display left side angles (ignores right side)"
             )
+        with col3:
+            text_color=st.selectbox("Tekstcolor",["black", "white"])
+          
+
         
         # Processing mode
         processing_mode = st.sidebar.radio(
@@ -1017,7 +1023,7 @@ def main_():
     
     try:
         run(run_streamlit, stframe, filetype, input_file, output_file, 
-            detection_confidence, tracking_confidence, 0, rotate, 
+            detection_confidence, tracking_confidence, 0, rotate, text_color, 
             show_live if run_streamlit else True,
             use_wrist_shoulder_hip if run_streamlit else USE_WRIST_SHOULDER_HIP,
             left_side_only if run_streamlit else USE_LEFT_SIDE_ONLY)
