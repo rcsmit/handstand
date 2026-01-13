@@ -1,6 +1,8 @@
 # Optimized for Google Cloud Run
 # Lower memory usage, better temp file handling
 
+# URL : https://handstandanalyzer-481925201210.europe-west4.run.app/
+
 import cv2
 import mediapipe as mp
 import numpy as np
@@ -843,7 +845,7 @@ def right(s, amount):
     return s[-amount:]
 
 def show_info():
-     # Show Cloud Run tips
+    # Show Cloud Run tips
     st.subheader("ℹ️ How it works")
     st.markdown("""
     **This app analyzes your handstand form:**
@@ -865,7 +867,7 @@ def main_():
         st.set_page_config(page_title="Handstand Analyzer", page_icon="🤸")
         
         st.header("🤸 Handstand Analyzer")
-        st.write("**Cloud Run Edition** - version 181225g")
+        st.write("**Cloud Run Edition** - version 181225gx")
         
        
 
@@ -964,4 +966,5 @@ def main():
 
 if __name__ == '__main__':
     main()
+
                  
