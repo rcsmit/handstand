@@ -299,6 +299,8 @@ def process_frame(image, pose, mp_pose, mp_drawing, drawing_spec, drawing_spec_p
         right_knee = get_landmark('RIGHT_KNEE')
         left_ankle = get_landmark('LEFT_ANKLE')
         right_ankle = get_landmark('RIGHT_ANKLE')
+        left_foot_index = get_landmark('LEFT_FOOT_INDEX')
+        right_foot_index =get_landmark('RIGHT_FOOT_INDEX')
 
         if use_wrist_shoulder_hip:
             wrist_ = get_landmark('LEFT_WRIST')
@@ -310,6 +312,8 @@ def process_frame(image, pose, mp_pose, mp_drawing, drawing_spec, drawing_spec_p
         else:
             wrist = get_landmark('LEFT_WRIST')
             wrist_r = get_landmark('RIGHT_WRIST')
+            idx = get_landmark('LEFT_INDEX')
+            idx_r = get_landmark('RIGHT_INDEX')
         # Hide face landmarks
         hide_landmarks = ['LEFT_EYE', 'RIGHT_EYE', 'LEFT_EYE_INNER', 'RIGHT_EYE_INNER', 
                          'LEFT_EYE_OUTER', 'RIGHT_EYE_OUTER', 'NOSE', 'MOUTH_LEFT', 
@@ -321,9 +325,9 @@ def process_frame(image, pose, mp_pose, mp_drawing, drawing_spec, drawing_spec_p
                             "LEFT_THUMB",
                             "RIGHT_THUMB",
                             "LEFT_HEEL",
-                            "RIGHT_HEEL",
-                            "LEFT_FOOT_INDEX",
-                            "RIGHT_FOOT_INDEX"]
+                            "RIGHT_HEEL"]
+                            # "LEFT_FOOT_INDEX",
+                            # "RIGHT_FOOT_INDEX"]
         if use_wrist_shoulder_hip:
             hide_landmarks = hide_landmarks+["LEFT_ELBOW", "RIGHT_ELBOW", "LEFT_WRIST", "RIGHT_WRIST"]
         if left_side_only:
@@ -347,7 +351,10 @@ def process_frame(image, pose, mp_pose, mp_drawing, drawing_spec, drawing_spec_p
                 'left_elbow': int(calculate_angle(shoulder, elbow, wrist)),
                 'right_elbow': int(calculate_angle(shoulder_r, elbow_r, wrist_r)),
                 'left_knee': int(calculate_angle(left_hip, left_knee, left_ankle)),
-                'right_knee': int(calculate_angle(right_hip, right_knee, right_ankle))
+                'right_knee': int(calculate_angle(right_hip, right_knee, right_ankle)),
+                'left_ankle':':int(calculate_angle(left_knee, left_ankle,left_foot_index)),
+                'right_ankle':':int(calculate_angle(right_knee, right_ankle,right_foot_index))
+              
             }
         else:
             # Original shoulder angle: hip → shoulder → elbow
@@ -363,7 +370,13 @@ def process_frame(image, pose, mp_pose, mp_drawing, drawing_spec, drawing_spec_p
                 'left_elbow': int(calculate_angle(shoulder, elbow, wrist)),
                 'right_elbow': int(calculate_angle(shoulder_r, elbow_r, wrist_r)),
                 'left_knee': int(calculate_angle(left_hip, left_knee, left_ankle)),
-                'right_knee': int(calculate_angle(right_hip, right_knee, right_ankle))
+                'right_knee': int(calculate_angle(right_hip, right_knee, right_ankle)),
+                'left_wrist':int(calculate_angle(idx, wrist,elbow)),
+                'right_wrist':int(calculate_angle(idx_r, wrist_r,elbow_r)),
+                'left_ankle':':int(calculate_angle(left_knee, left_ankle,left_foot_index)),
+                'right_ankle':':int(calculate_angle(right_knee, right_ankle,right_foot_index)),
+              
+
             }
 
         # Draw lines (vectorized)
@@ -377,6 +390,9 @@ def process_frame(image, pose, mp_pose, mp_drawing, drawing_spec, drawing_spec_p
                     (wrist, shoulder, line_color),
                  
                     (shoulder, left_hip, line_color),
+                    (idx, wrist,line_color),
+                    
+                    (right_ankle,left_foot_index,line_color),
                 ]
             else:
                 # Draw both sides
@@ -389,6 +405,8 @@ def process_frame(image, pose, mp_pose, mp_drawing, drawing_spec, drawing_spec_p
                     (wrist_r, shoulder_r, line_color_b),
                     (shoulder, left_hip, line_color),
                     (shoulder_r, right_hip, line_color_r),
+                    (left_ankle,left_foot_index,line_color),
+                    (right_ankle,left_foot_index,line_color),
                 ]
         else:
             if left_side_only:
@@ -399,6 +417,8 @@ def process_frame(image, pose, mp_pose, mp_drawing, drawing_spec, drawing_spec_p
                     (wrist, elbow, line_color),
                     (shoulder, elbow, line_color),
                     (shoulder, left_hip, line_color),
+                    (idx, wrist,line_color),
+                    (right_ankle,left_foot_index,line_color),
                 ]
             else:
                 # Draw both sides
@@ -409,10 +429,14 @@ def process_frame(image, pose, mp_pose, mp_drawing, drawing_spec, drawing_spec_p
                     (right_hip, right_knee, line_color_r),
                     (wrist, elbow, line_color),
                     (wrist_r, elbow_r, line_color_b),
+                    (idx, wrist,line_color),
+                    (idx_r, wrist_r,line_color_r),
                     (shoulder, elbow, line_color),
                     (shoulder_r, elbow_r, line_color_r),
                     (shoulder, left_hip, line_color),
                     (shoulder_r, right_hip, line_color_r),
+                    (left_ankle,left_foot_index,line_color),
+                    (right_ankle,left_foot_index,line_color),
                 ]
         
         for p1, p2, color in lines:
@@ -440,12 +464,14 @@ def process_frame(image, pose, mp_pose, mp_drawing, drawing_spec, drawing_spec_p
                     (f"knee: {angles['left_knee']}", left_knee),
                     (f"hip: {angles['left_hip']}", left_hip),
                     (f"shoulder: {angles['left_shoulder']}", shoulder),
+                    (f"ankle: {angles['left_ankle']}", left_ankle),
                 ]
             else:
                 angle_texts = [
                     (f"knee: {angles['left_knee']}/{angles['right_knee']}", left_knee),
                     (f"hip: {angles['left_hip']}/{angles['right_hip']}", left_hip),
                     (f"shoulder: {angles['left_shoulder']}/{angles['right_shoulder']}", shoulder),
+                    (f"ankle: {angles['left_ankle']}/{angles['right_ankle']}", ankle),
                 ]
         else:
             if left_side_only:
@@ -454,6 +480,8 @@ def process_frame(image, pose, mp_pose, mp_drawing, drawing_spec, drawing_spec_p
                     (f"hip: {angles['left_hip']}", left_hip),
                     (f"elbow: {angles['left_elbow']}", elbow),
                     (f"shoulder: {angles['left_shoulder']}", shoulder),
+                    (f"wrist: {angles['left_wrist']}", left_wrist),
+                    (f"ankle: {angles['left_ankle']}", left_ankle),
                 ]
             else:
                 angle_texts = [
@@ -461,6 +489,9 @@ def process_frame(image, pose, mp_pose, mp_drawing, drawing_spec, drawing_spec_p
                     (f"hip: {angles['left_hip']}/{angles['right_hip']}", left_hip),
                     (f"elbow: {angles['left_elbow']}/{angles['right_elbow']}", elbow_r),
                     (f"shoulder: {angles['left_shoulder']}/{angles['right_shoulder']}", shoulder),
+                    (f"ankle: {angles['left_ankle']}/{angles['right_ankle']}", ankle),
+                    (f"wrist": {angles['left_wrist']}/{angles['right_wrist']}", wrist),
+                  
                 ]
         
         for text, pos in angle_texts:
@@ -867,7 +898,7 @@ def main_():
         st.set_page_config(page_title="Handstand Analyzer", page_icon="🤸")
         
         st.header("🤸 Handstand Analyzer")
-        st.write("**Cloud Run Edition** - version 181225gx")
+        st.write("**Cloud Run Edition** - version 070226a")
         
        
 
