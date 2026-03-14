@@ -1,5 +1,5 @@
 streamlit
-mediapipe>=0.10.30 (earliest version available on the platform)
+mediapipe>=0.10.30 #(earliest version available on the platform)
 opencv-python-headless 
 protobuf<5
 numpy
