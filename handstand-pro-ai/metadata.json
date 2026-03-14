@@ -1,0 +1,7 @@
+{
+  "name": "Handstand Pro AI",
+  "description": "Analyze your handstand form with advanced AI joint tracking and alignment feedback.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}
