@@ -1,0 +1,1001 @@
+# Optimized for Google Cloud Run
+# Lower memory usage, better temp file handling
+
+# URL : https://handstandanalyzer-481925201210.europe-west4.run.app/
+
+import cv2
+import mediapipe as mp
+import numpy as np
+import time
+import streamlit as st
+from datetime import datetime
+import tempfile
+import os
+import shutil
+from pathlib import Path
+import gc
+from collections import defaultdict
+
+# Force read-only model loading
+os.environ["MEDIAPIPE_DISABLE_GPU"] = "1"
+os.environ["GLOG_minloglevel"] = "2"
+
+# CRITICAL: Use /tmp for Cloud Run
+os.environ['TMPDIR'] = '/tmp'
+os.environ['TEMP'] = '/tmp'
+os.environ['TMP'] = '/tmp'
+
+# Memory management settings
+MAX_FRAMES = 300  # Limit video processing to ~10 seconds at 30fps
+SKIP_FRAMES = 2   # Process every Nth frame to reduce load
+RESIZE_FACTOR = 0.5  # Resize input frames to reduce memory
+
+# Ideal handstand angles (in degrees)
+IDEAL_ANGLES = {
+    'shoulder': 180,
+    'elbow': 180,
+    'hip': 180,
+    'knee': 180
+}
+
+# Weights for scoring (must sum to 1.0)
+WEIGHTS = {
+    'shoulder': 0.30,  # Most important for form
+    'elbow': 0.25,     # Safety critical
+    'hip': 0.30,       # Body line
+    'knee': 0.15       # Less critical
+}
+
+# Shoulder angle calculation method
+USE_WRIST_SHOULDER_HIP = False  # Set to True to use wrist→shoulder→hip angle instead of hip→shoulder→elbow
+
+# Side to analyze
+USE_LEFT_SIDE_ONLY = True  # Set to False to analyze both sides
+
+COMBINED_FACTOR = 0.85 # combined = (total_score * COMBINED_FACTOR + symmetry_score * (1-COMBINED_FACTOR))
+
+def calculate_joint_score(actual_angle, ideal_angle):
+    """Calculate score for a single joint (0-100)"""
+    deviation = abs(actual_angle - ideal_angle)
+    # Linear decay: perfect at 0° deviation, 0 at 50° deviation
+    score = max(0, 100 - (deviation * 2))
+    return score
+
+def calculate_handstand_score(angles):
+    """
+    Calculate weighted handstand score
+    angles = {
+        'left_shoulder': 175, 'right_shoulder': 178,
+        'left_elbow': 180, 'right_elbow': 179,
+        'left_hip': 165, 'right_hip': 168,
+        'left_knee': 180, 'right_knee': 180
+    }
+    """
+    scores = {}
+    
+    # Calculate for each joint - only left side if USE_LEFT_SIDE_ONLY is True
+    for joint in ['shoulder', 'elbow', 'hip', 'knee']:
+        left_angle = angles.get(f'left_{joint}', 0)
+        
+        if USE_LEFT_SIDE_ONLY:
+            # Use only left side
+            scores[joint] = calculate_joint_score(left_angle, IDEAL_ANGLES[joint])
+        else:
+            # Average left and right
+            right_angle = angles.get(f'right_{joint}', 0)
+            avg_angle = (left_angle + right_angle) / 2
+            scores[joint] = calculate_joint_score(avg_angle, IDEAL_ANGLES[joint])
+    
+    # Calculate weighted total score
+    total_score = sum(scores[joint] * WEIGHTS[joint] for joint in scores)
+    
+    return total_score, scores
+
+def calculate_symmetry_score(angles):
+    """Calculate left/right symmetry score - only if analyzing both sides"""
+    if USE_LEFT_SIDE_ONLY:
+        # Return perfect symmetry score if only analyzing one side
+        return 100, {'shoulder': 100, 'elbow': 100, 'hip': 100, 'knee': 100}
+    
+    symmetry_scores = {}
+    
+    for joint in ['shoulder', 'elbow', 'hip', 'knee']:
+        left = angles.get(f'left_{joint}', 0)
+        right = angles.get(f'right_{joint}', 0)
+        diff = abs(left - right)
+        
+        # Perfect symmetry = 100, decreases by 3 points per degree difference
+        symmetry_scores[joint] = max(0, 100 - (diff * 3))
+    
+    avg_symmetry = sum(symmetry_scores.values()) / len(symmetry_scores)
+    return avg_symmetry, symmetry_scores
+
+def generate_feedback(angles, form_scores, symmetry_scores,left_side_only, use_wrist_shoulder_hip):
+    """Generate actionable feedback based on angles"""
+    feedback = []
+    
+    # Check shoulders
+    shoulder_angle = angles['left_shoulder']
+    if left_side_only:
+        if shoulder_angle < 170:
+            feedback.append("💡 Open your shoulder more - push through your hand and reach tall")
+        elif shoulder_angle < 175:
+            feedback.append("👍 Good shoulder angle - try to open it a bit more")
+        else:
+            feedback.append("✨ Excellent shoulder position!")
+    else:
+        avg_shoulder = (angles['left_shoulder'] + angles['right_shoulder']) / 2
+        if avg_shoulder < 170:
+            feedback.append("💡 Open your shoulders more - push through your hands and reach tall")
+        elif avg_shoulder < 175:
+            feedback.append("👍 Good shoulder angle - try to open them a bit more")
+        else:
+            feedback.append("✨ Excellent shoulder position!")
+    if not use_wrist_shoulder_hip:
+        # Check elbows
+        elbow_angle = angles['left_elbow']
+        if left_side_only:
+            if elbow_angle < 170:
+                feedback.append("⚠️ Lock your elbow! Bent arm is dangerous and unstable")
+            elif elbow_angle < 178:
+                feedback.append("💪 Almost there - lock out that elbow completely")
+            else:
+                feedback.append("✨ Perfect elbow lock!")
+        else:
+            avg_elbow = (angles['left_elbow'] + angles['right_elbow']) / 2
+            if avg_elbow < 170:
+                feedback.append("⚠️ Lock your elbows! Bent arms are dangerous and unstable")
+            elif avg_elbow < 178:
+                feedback.append("💪 Almost there - lock out those elbows completely")
+            else:
+                feedback.append("✨ Perfect elbow lock!")
+    
+    # Check hips
+    hip_angle = angles['left_hip']
+    if left_side_only:
+        if hip_angle < 165:
+            feedback.append("💡 Squeeze your glutes and engage your core to straighten your body")
+        elif hip_angle < 175:
+            feedback.append("👍 Good body line - focus on staying straight")
+        else:
+            feedback.append("✨ Excellent straight body line!")
+    else:
+        avg_hip = (angles['left_hip'] + angles['right_hip']) / 2
+        if avg_hip < 165:
+            feedback.append("💡 Squeeze your glutes and engage your core to straighten your body")
+        elif avg_hip < 175:
+            feedback.append("👍 Good body line - focus on staying straight")
+        else:
+            feedback.append("✨ Excellent straight body line!")
+    
+    # Check knees
+    knee_angle = angles['left_knee']
+    if left_side_only:
+        if knee_angle < 170:
+            feedback.append("💡 Straighten your leg - point your toes")
+        elif knee_angle < 178:
+            feedback.append("👍 Almost straight - lock that knee")
+        else:
+            feedback.append("✨ Perfect leg extension!")
+    else:
+        avg_knee = (angles['left_knee'] + angles['right_knee']) / 2
+        if avg_knee < 170:
+            feedback.append("💡 Straighten your legs - point your toes")
+        elif avg_knee < 178:
+            feedback.append("👍 Almost straight - lock those knees")
+        else:
+            feedback.append("✨ Perfect leg extension!")
+    
+    # Check symmetry only if analyzing both sides
+    if not left_side_only:
+        for joint in ['shoulder', 'elbow', 'hip', 'knee']:
+            if symmetry_scores[joint] < 85:
+                left = angles[f'left_{joint}']
+                right = angles[f'right_{joint}']
+                side = "left" if left < right else "right"
+                feedback.append(f"⚖️ {joint.capitalize()} asymmetry - your {side} side needs work")
+    
+    return feedback
+
+def calculate_angle(a, b, c):
+    a = np.array(a)
+    b = np.array(b)
+    c = np.array(c)
+
+    radians = np.arctan2(c[1] - b[1], c[0] - b[0]) - np.arctan2(
+        a[1] - b[1], a[0] - b[0]
+    )
+    angle = np.abs(radians * 180.0 / np.pi)
+
+    if angle > 180.0:
+        angle = 360 - angle
+
+    return angle
+
+@st.cache_resource
+def setup_mediapipe():
+    """Setup MediaPipe for Cloud Run environment"""
+    try:
+        # Ensure /tmp exists and is writable
+        os.makedirs('/tmp', exist_ok=True)
+        
+        mp_path = Path(mp.__file__).parent
+        models_src = mp_path / "modules"
+        
+        # Use /tmp for Cloud Run
+        models_dst = Path('/tmp') / 'mediapipe_modules'
+        
+        if models_src.exists() and not models_dst.exists():
+            shutil.copytree(models_src, models_dst, dirs_exist_ok=True)
+            for file in models_dst.rglob('*'):
+                if file.is_file():
+                    os.chmod(str(file), 0o666)
+        
+        os.environ['MEDIAPIPE_MODEL_PATH'] = str(models_dst)
+        
+    except Exception as e:
+        st.warning(f"Model setup: {e}")
+    
+    return mp.solutions.pose, mp.solutions.drawing_utils
+
+def process_frame(image, pose, mp_pose, mp_drawing, drawing_spec, drawing_spec_points, rotate, text_color, return_angles=False, use_wrist_shoulder_hip=False, left_side_only=False):
+    """Process a single frame with memory optimization"""
+    
+    line_color = (255, 255, 255)
+    line_color_r = (255, 0, 0)
+    line_color_g = (0, 255, 0)
+    line_color_b = (0, 0, 255)
+    if text_color=="black":
+        text_color = (0, 0, 0)
+    else:
+        text_color = (255,255,255)
+    try:
+        # Resize to reduce memory usage
+        h, w = image.shape[:2]
+        image = cv2.resize(image, (int(w * RESIZE_FACTOR), int(h * RESIZE_FACTOR)))
+        
+        if rotate:
+            image = cv2.rotate(image, cv2.ROTATE_180)
+
+        # Convert color space
+        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+        image_height, image_width, _ = image.shape
+
+        # Process with MediaPipe
+        image.flags.writeable = False
+        results = pose.process(image)
+        image.flags.writeable = True
+
+        # If no pose detected
+        if results.pose_landmarks is None:
+            image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
+            cv2.putText(
+                image, "No pose detected", 
+                (20, 30), 
+                cv2.FONT_HERSHEY_SIMPLEX, 
+                0.7, 
+                (0, 0, 255), 
+                2, 
+                cv2.LINE_AA
+            )
+            return (cv2.resize(image, (0, 0), fx=0.4, fy=0.4), None) if return_angles else cv2.resize(image, (0, 0), fx=0.4, fy=0.4)
+
+        landmarks = results.pose_landmarks.landmark
+
+        # Get landmark coordinates (vectorized)
+        def get_landmark(name):
+            lm = landmarks[mp_pose.PoseLandmark[name].value]
+            return [lm.x, lm.y]
+
+        shoulder = get_landmark('LEFT_SHOULDER')
+        shoulder_r = get_landmark('RIGHT_SHOULDER')
+        elbow = get_landmark('LEFT_ELBOW')
+        elbow_r = get_landmark('RIGHT_ELBOW')
+        # wrist = get_landmark('LEFT_WRIST')
+        # wrist_r = get_landmark('RIGHT_WRIST')
+        left_hip = get_landmark('LEFT_HIP')
+        right_hip = get_landmark('RIGHT_HIP')
+        left_knee = get_landmark('LEFT_KNEE')
+        right_knee = get_landmark('RIGHT_KNEE')
+        left_ankle = get_landmark('LEFT_ANKLE')
+        right_ankle = get_landmark('RIGHT_ANKLE')
+        left_foot_index = get_landmark('LEFT_FOOT_INDEX')
+        right_foot_index =get_landmark('RIGHT_FOOT_INDEX')
+
+        if use_wrist_shoulder_hip:
+            wrist_ = get_landmark('LEFT_WRIST')
+            wrist_r_ = get_landmark('RIGHT_WRIST')
+            idx = get_landmark('LEFT_INDEX')
+            idx_r = get_landmark('RIGHT_INDEX')
+            wrist= [(wrist_[0] + idx[0]) / 2, (wrist_[1] + idx[1]) / 2]
+            wrist_r= [(wrist_r_[0] + idx_r[0]) / 2, (wrist_r_[1] + idx_r[1]) / 2]
+        else:
+            wrist = get_landmark('LEFT_WRIST')
+            wrist_r = get_landmark('RIGHT_WRIST')
+            idx = get_landmark('LEFT_INDEX')
+            idx_r = get_landmark('RIGHT_INDEX')
+        # Hide face landmarks
+        hide_landmarks = ['LEFT_EYE', 'RIGHT_EYE', 'LEFT_EYE_INNER', 'RIGHT_EYE_INNER', 
+                         'LEFT_EYE_OUTER', 'RIGHT_EYE_OUTER', 'NOSE', 'MOUTH_LEFT', 
+                         'MOUTH_RIGHT', 'LEFT_EAR', 'RIGHT_EAR', 'LEFT_SHOULDER', 'RIGHT_SHOULDER',
+                           "LEFT_PINKY",
+                            "RIGHT_PINKY",
+                            "LEFT_INDEX",
+                            "RIGHT_INDEX",
+                            "LEFT_THUMB",
+                            "RIGHT_THUMB",
+                            "LEFT_HEEL",
+                            "RIGHT_HEEL"]
+                            # "LEFT_FOOT_INDEX",
+                            # "RIGHT_FOOT_INDEX"]
+        if use_wrist_shoulder_hip:
+            hide_landmarks = hide_landmarks+["LEFT_ELBOW", "RIGHT_ELBOW", "LEFT_WRIST", "RIGHT_WRIST"]
+        if left_side_only:
+            hide_landmarks = hide_landmarks+["RIGHT_WRIST"]
+
+        for lm_name in hide_landmarks:
+            landmarks[mp_pose.PoseLandmark[lm_name].value].visibility = 0
+
+        # Calculate angles
+        if use_wrist_shoulder_hip:
+            # Alternative shoulder angle: wrist → shoulder → hip
+            angles = {
+                'left_arm': int(calculate_angle(shoulder, elbow, wrist)),
+                'right_arm': int(calculate_angle(shoulder_r, elbow_r, wrist_r)),
+                'left_leg': int(calculate_angle(left_hip, left_knee, left_ankle)),
+                'right_leg': int(calculate_angle(right_hip, right_knee, right_ankle)),
+                'left_shoulder': int(calculate_angle(wrist, shoulder, left_hip)),
+                'right_shoulder': int(calculate_angle(wrist_r, shoulder_r, right_hip)),
+                'left_hip': int(calculate_angle(shoulder, left_hip, left_knee)),
+                'right_hip': int(calculate_angle(shoulder_r, right_hip, right_knee)),
+                'left_elbow': int(calculate_angle(shoulder, elbow, wrist)),
+                'right_elbow': int(calculate_angle(shoulder_r, elbow_r, wrist_r)),
+                'left_knee': int(calculate_angle(left_hip, left_knee, left_ankle)),
+                'right_knee': int(calculate_angle(right_hip, right_knee, right_ankle)),
+                'left_ankle':':int(calculate_angle(left_knee, left_ankle,left_foot_index)),
+                'right_ankle':':int(calculate_angle(right_knee, right_ankle,right_foot_index))
+              
+            }
+        else:
+            # Original shoulder angle: hip → shoulder → elbow
+            angles = {
+                'left_arm': int(calculate_angle(shoulder, elbow, wrist)),
+                'right_arm': int(calculate_angle(shoulder_r, elbow_r, wrist_r)),
+                'left_leg': int(calculate_angle(left_hip, left_knee, left_ankle)),
+                'right_leg': int(calculate_angle(right_hip, right_knee, right_ankle)),
+                'left_shoulder': int(calculate_angle(left_hip, shoulder, elbow)),
+                'right_shoulder': int(calculate_angle(right_hip, shoulder_r, elbow_r)),
+                'left_hip': int(calculate_angle(shoulder, left_hip, left_knee)),
+                'right_hip': int(calculate_angle(shoulder_r, right_hip, right_knee)),
+                'left_elbow': int(calculate_angle(shoulder, elbow, wrist)),
+                'right_elbow': int(calculate_angle(shoulder_r, elbow_r, wrist_r)),
+                'left_knee': int(calculate_angle(left_hip, left_knee, left_ankle)),
+                'right_knee': int(calculate_angle(right_hip, right_knee, right_ankle)),
+                'left_wrist':int(calculate_angle(idx, wrist,elbow)),
+                'right_wrist':int(calculate_angle(idx_r, wrist_r,elbow_r)),
+                'left_ankle':':int(calculate_angle(left_knee, left_ankle,left_foot_index)),
+                'right_ankle':':int(calculate_angle(right_knee, right_ankle,right_foot_index)),
+              
+
+            }
+
+        # Draw lines (vectorized)
+        if use_wrist_shoulder_hip:
+            # Alternative shoulder angle: wrist → shoulder → hip
+            if left_side_only:
+                # Only draw left side
+                lines = [
+                    (left_ankle, left_knee, line_color),
+                    (left_hip, left_knee, line_color),
+                    (wrist, shoulder, line_color),
+                 
+                    (shoulder, left_hip, line_color),
+                    (idx, wrist,line_color),
+                    
+                    (right_ankle,left_foot_index,line_color),
+                ]
+            else:
+                # Draw both sides
+                lines = [
+                    (left_ankle, left_knee, line_color),
+                    (right_ankle, right_knee, line_color_r),
+                    (left_hip, left_knee, line_color),
+                    (right_hip, right_knee, line_color_r),
+                    (wrist, shoulder, line_color),
+                    (wrist_r, shoulder_r, line_color_b),
+                    (shoulder, left_hip, line_color),
+                    (shoulder_r, right_hip, line_color_r),
+                    (left_ankle,left_foot_index,line_color),
+                    (right_ankle,left_foot_index,line_color),
+                ]
+        else:
+            if left_side_only:
+                # Only draw left side
+                lines = [
+                    (left_ankle, left_knee, line_color),
+                    (left_hip, left_knee, line_color),
+                    (wrist, elbow, line_color),
+                    (shoulder, elbow, line_color),
+                    (shoulder, left_hip, line_color),
+                    (idx, wrist,line_color),
+                    (right_ankle,left_foot_index,line_color),
+                ]
+            else:
+                # Draw both sides
+                lines = [
+                    (left_ankle, left_knee, line_color),
+                    (right_ankle, right_knee, line_color_r),
+                    (left_hip, left_knee, line_color),
+                    (right_hip, right_knee, line_color_r),
+                    (wrist, elbow, line_color),
+                    (wrist_r, elbow_r, line_color_b),
+                    (idx, wrist,line_color),
+                    (idx_r, wrist_r,line_color_r),
+                    (shoulder, elbow, line_color),
+                    (shoulder_r, elbow_r, line_color_r),
+                    (shoulder, left_hip, line_color),
+                    (shoulder_r, right_hip, line_color_r),
+                    (left_ankle,left_foot_index,line_color),
+                    (right_ankle,left_foot_index,line_color),
+                ]
+        
+        for p1, p2, color in lines:
+            cv2.line(image, 
+                    (int(p1[0] * image_width), int(p1[1] * image_height)),
+                    (int(p2[0] * image_width), int(p2[1] * image_height)),
+                    color, 2)
+
+        # Draw circles
+        if left_side_only:
+            for pt in [shoulder]:
+                cv2.circle(image, (int(pt[0] * image_width), int(pt[1] * image_height)), 
+                          3, line_color, 2)
+        else:
+            for pt in [shoulder, shoulder_r]:
+                cv2.circle(image, (int(pt[0] * image_width), int(pt[1] * image_height)), 
+                          3, line_color, 2)
+
+        # Add angle text (smaller font for Cloud Run)
+        font_scale = 0.5
+        if use_wrist_shoulder_hip:
+            # Alternative shoulder angle: wrist → shoulder → hip
+            if left_side_only:
+                angle_texts = [
+                    (f"knee: {angles['left_knee']}", left_knee),
+                    (f"hip: {angles['left_hip']}", left_hip),
+                    (f"shoulder: {angles['left_shoulder']}", shoulder),
+                    (f"ankle: {angles['left_ankle']}", left_ankle),
+                ]
+            else:
+                angle_texts = [
+                    (f"knee: {angles['left_knee']}/{angles['right_knee']}", left_knee),
+                    (f"hip: {angles['left_hip']}/{angles['right_hip']}", left_hip),
+                    (f"shoulder: {angles['left_shoulder']}/{angles['right_shoulder']}", shoulder),
+                    (f"ankle: {angles['left_ankle']}/{angles['right_ankle']}", ankle),
+                ]
+        else:
+            if left_side_only:
+                angle_texts = [
+                    (f"knee: {angles['left_knee']}", left_knee),
+                    (f"hip: {angles['left_hip']}", left_hip),
+                    (f"elbow: {angles['left_elbow']}", elbow),
+                    (f"shoulder: {angles['left_shoulder']}", shoulder),
+                    (f"wrist: {angles['left_wrist']}", left_wrist),
+                    (f"ankle: {angles['left_ankle']}", left_ankle),
+                ]
+            else:
+                angle_texts = [
+                    (f"knee: {angles['left_knee']}/{angles['right_knee']}", left_knee),
+                    (f"hip: {angles['left_hip']}/{angles['right_hip']}", left_hip),
+                    (f"elbow: {angles['left_elbow']}/{angles['right_elbow']}", elbow_r),
+                    (f"shoulder: {angles['left_shoulder']}/{angles['right_shoulder']}", shoulder),
+                    (f"ankle: {angles['left_ankle']}/{angles['right_ankle']}", ankle),
+                    (f"wrist": {angles['left_wrist']}/{angles['right_wrist']}", wrist),
+                  
+                ]
+        
+        for text, pos in angle_texts:
+            cv2.putText(
+                image, text,
+                (int(pos[0] * image_width - 30), int(pos[1] * image_height)),
+                cv2.FONT_HERSHEY_SIMPLEX, font_scale, text_color, 1, cv2.LINE_AA
+            )
+
+        # Convert back and draw landmarks
+        image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
+        
+        # mp_drawing.draw_landmarks(
+        #     image, results.pose_landmarks, mp_pose.POSE_CONNECTIONS,
+        #     drawing_spec_points, connection_drawing_spec=drawing_spec
+        # )
+        mp_drawing.draw_landmarks(
+            image, results.pose_landmarks
+        )
+        
+        # Resize for display
+        final_frame = cv2.resize(image, (0, 0), fx=0.5, fy=0.5)
+        
+        if return_angles:
+            return final_frame, angles
+        return final_frame
+        
+    except Exception as e:
+        st.error(f"Frame error: {str(e)}")
+        result = np.zeros((240, 320, 3), dtype=np.uint8)
+        return (result, None) if return_angles else result
+    finally:
+        # Force garbage collection
+        gc.collect()
+
+def show_analysis(angles, left_side_only, use_wrist_shoulder_hip):
+    """Display comprehensive handstand analysis with scores and feedback."""
+    
+    # Calculate scores
+    total_score, form_scores = calculate_handstand_score(angles)
+    symmetry_score, symmetry_scores = calculate_symmetry_score(angles)
+    feedback = generate_feedback(angles, form_scores, symmetry_scores,left_side_only, use_wrist_shoulder_hip)
+    
+    st.subheader("🏆 Handstand Analysis")
+    
+    # Display angle measurements
+    _display_angle_measurements(angles, left_side_only, use_wrist_shoulder_hip)
+    
+    # Display score metrics
+    _display_score_metrics(total_score, symmetry_score, left_side_only)
+    
+    # Display grade
+    _display_grade(total_score, symmetry_score, left_side_only)
+    
+    # Display detailed breakdown
+    _display_detailed_breakdown(form_scores, symmetry_scores, left_side_only, use_wrist_shoulder_hip)
+    
+    # Display feedback
+    _display_feedback(feedback)
+
+
+def _display_angle_measurements(angles, left_side_only, use_wrist_shoulder_hip):
+    """Display measured angles in an expandable section."""
+    
+    joints = ['shoulder', 'elbow', 'hip', 'knee']
+    if use_wrist_shoulder_hip:
+        joints.remove('elbow')
+    
+
+    if left_side_only:
+        cols = st.columns(2)
+        _display_side_angles(cols[0], angles, 'left', joints,use_wrist_shoulder_hip)
+        _display_weight_factors(cols[1], joints,use_wrist_shoulder_hip)
+    else:
+        cols = st.columns(3)
+        _display_side_angles(cols[0], angles, 'left', joints,use_wrist_shoulder_hip)
+        _display_side_angles(cols[1], angles, 'right', joints,use_wrist_shoulder_hip)
+        _display_weight_factors(cols[2], joints,use_wrist_shoulder_hip)
+
+
+def _display_side_angles(col, angles, side, joints,use_wrist_shoulder_hip):
+    """Display angles for one side of the body."""
+    with col:
+        st.write(f"**{side.capitalize()} Side:**")
+        for joint in joints:
+            if use_wrist_shoulder_hip and joint == "elbow":
+                continue
+            angle_key = f"{side}_{joint}"
+            st.write(f"{joint.capitalize()}: {round(angles[angle_key],1)}° (ideal: 180°)")
+
+
+def _display_weight_factors(col, joints, use_wrist_shoulder_hip):
+    """Display weight factors for each joint."""
+    with col:
+        st.write("**Weight factor**")
+        for joint in joints:
+            if use_wrist_shoulder_hip and joint == "elbow":
+                continue
+            st.write(f"{joint.capitalize()}: {WEIGHTS[joint]}")
+
+
+def _display_score_metrics(total_score, symmetry_score, left_side_only):
+    """Display score metrics based on analysis mode."""
+    if left_side_only:
+        col1, col2 = st.columns(2)
+        with col1:
+            st.metric("Form Score", f"{total_score:.1f}/100")
+        with col2:
+            st.metric("Overall Score", f"{total_score:.1f}/100")
+    else:
+        col1, col2, col3 = st.columns(3)
+        with col1:
+            st.metric("Form Score", f"{total_score:.1f}/100")
+        with col2:
+            st.metric("Symmetry Score", f"{symmetry_score:.1f}/100")
+        with col3:
+            combined = total_score * COMBINED_FACTOR + symmetry_score * (1 - COMBINED_FACTOR)
+            st.metric("Overall Score", f"{combined:.1f}/100")
+
+
+def _display_grade(total_score, symmetry_score, left_side_only):
+    """Display performance grade with color coding."""
+    
+    score_to_grade = total_score if left_side_only else (
+        total_score * COMBINED_FACTOR + symmetry_score * (1 - COMBINED_FACTOR)
+    )
+    
+    # Grade thresholds
+    grade_levels = [
+        (90, "⭐⭐⭐⭐⭐ EXCELLENT", "green"),
+        (80, "⭐⭐⭐⭐ GREAT", "blue"),
+        (70, "⭐⭐⭐ GOOD", "orange"),
+        (60, "⭐⭐ FAIR", "orange"),
+        (0, "⭐ NEEDS WORK", "red")
+    ]
+    
+    for threshold, grade, color in grade_levels:
+        if score_to_grade >= threshold:
+            st.markdown(f"### :{color}[{grade}]")
+            break
+
+
+def _display_detailed_breakdown(form_scores, symmetry_scores, left_side_only, use_wrist_shoulder_hip):
+    """Display detailed score breakdown for each joint."""
+    
+    with st.expander("📊 Detailed Breakdown", expanded=True):
+        if left_side_only:
+            st.write("**Joint Scores (Left Side):**")
+            _display_joint_scores(form_scores, use_wrist_shoulder_hip)
+        else:
+            col1, col2 = st.columns(2)
+            with col1:
+                st.write("**Joint Scores:**")
+                _display_joint_scores(form_scores, use_wrist_shoulder_hip)
+            with col2:
+                st.write("**Symmetry Scores:**")
+                _display_joint_scores(symmetry_scores, use_wrist_shoulder_hip)
+
+
+def _display_joint_scores(scores, use_wrist_shoulder_hip):
+    """Display progress bars for joint scores."""
+    for joint, score in scores.items():
+        if use_wrist_shoulder_hip and joint == "elbow":
+            continue
+        st.progress(score / 100, text=f"{joint.capitalize()}: {score:.0f}/100")
+
+
+def _display_feedback(feedback):
+    """Display feedback tips."""
+    st.subheader("💬 Feedback & Tips")
+    for tip in feedback:
+        st.write(tip)
+
+
+def run(run_streamlit, stframe, filetype, input_file, output_file, detection_confidence, tracking_confidence, complexity, rotate, text_color,show_live=True, use_wrist_shoulder_hip=False, left_side_only=False):
+    
+    mp_pose, mp_drawing = setup_mediapipe()
+    
+    line_color_g = (0, 255, 0)
+    line_color = (255, 255, 255)
+    
+    # drawing_spec = mp_drawing.DrawingSpec(thickness=3, circle_radius=2, color=line_color_g)
+    # drawing_spec_points = mp_drawing.DrawingSpec(thickness=3, circle_radius=2, color=line_color)
+    drawing_spec = mp_drawing.DrawingSpec(thickness=1, circle_radius=0, color=line_color_g)
+    drawing_spec_points = mp_drawing.DrawingSpec(thickness=1, circle_radius=0, color=line_color)
+
+    if filetype == "video":
+        vid = cv2.VideoCapture(input_file)
+        
+        if not vid.isOpened():
+            st.error("Could not open video file")
+            return
+
+        width = int(vid.get(cv2.CAP_PROP_FRAME_WIDTH))
+        height = int(vid.get(cv2.CAP_PROP_FRAME_HEIGHT))
+        fps = int(vid.get(cv2.CAP_PROP_FPS))
+        total_frames = int(vid.get(cv2.CAP_PROP_FRAME_COUNT))
+        
+        # Limit frames for Cloud Run
+        max_frames = min(total_frames, MAX_FRAMES)
+        
+        st.warning(f"⚠️ Cloud Run mode: Processing max {max_frames} frames (every {SKIP_FRAMES}th frame)")
+        st.info(f"Video: {width}x{height}, {fps} fps, {total_frames} total frames")
+        
+        # Create output video file
+        output_path = '/tmp/output_video.mp4'
+        output_width = int(width * RESIZE_FACTOR * 0.5)  # Display size
+        output_height = int(height * RESIZE_FACTOR * 0.5)
+        fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+        video_writer = cv2.VideoWriter(output_path, fourcc, fps // SKIP_FRAMES, 
+                                       (output_width, output_height))
+        
+        # Create progress bar
+        progress_bar = st.progress(0)
+        status_text = st.empty()
+        
+        # Collect angles for scoring
+        all_angles = []
+        
+        # Use lighter model for video on Cloud Run
+        with mp_pose.Pose(
+            static_image_mode=False,
+            min_detection_confidence=detection_confidence,
+            min_tracking_confidence=tracking_confidence,
+            model_complexity=0,  # Use lightest model (0) for Cloud Run
+            smooth_landmarks=True) as pose:
+            
+            frame_count = 0
+            processed_count = 0
+            
+            while vid.isOpened() and processed_count < max_frames:
+                success, image = vid.read()
+                
+                if not success:
+                    break
+                
+                frame_count += 1
+                
+                # Skip frames to reduce processing
+                if frame_count % SKIP_FRAMES != 0:
+                    continue
+                
+                processed_count += 1
+                
+                # Update progress
+                progress = processed_count / max_frames
+                progress_bar.progress(progress)
+                status_text.text(f"Processing frame {processed_count}/{max_frames}")
+                
+                # Process frame
+                result = process_frame(
+                    image, pose, mp_pose, mp_drawing, 
+                    drawing_spec, drawing_spec_points, rotate, text_color,
+                    return_angles=True, use_wrist_shoulder_hip=use_wrist_shoulder_hip,
+                    left_side_only=left_side_only
+                )
+                final_frame, frame_angles = result
+                
+                # Collect angles for scoring
+                if frame_angles:
+                    all_angles.append(frame_angles)
+                
+                # Write to output video
+                video_writer.write(final_frame)
+                
+                # Display in Streamlit (only show every 5th frame to reduce load)
+                if run_streamlit and show_live and processed_count % 5 == 0:
+                    stframe.image(final_frame, channels="BGR", use_container_width=True)
+                    time.sleep(0.01)
+                
+                # Store last frame for batch mode
+                last_frame = final_frame
+                
+                # Free memory every 10 frames
+                if processed_count % 10 == 0:
+                    gc.collect()
+            
+            vid.release()
+            video_writer.release()
+            progress_bar.progress(1.0)
+            status_text.text(f"✅ Complete! Processed {processed_count} frames.")
+            
+            # Calculate scores if we have angle data
+            if all_angles:
+                # Average angles across all frames
+                avg_angles = {}
+                for key in all_angles[0].keys():
+                    avg_angles[key] = sum(frame[key] for frame in all_angles) / len(all_angles)
+                
+                show_analysis(avg_angles,left_side_only,use_wrist_shoulder_hip)
+              
+            # Show final frame and download button
+            if run_streamlit:
+                st.subheader("📹 Video Results")
+                col1, col2 = st.columns(2)
+                
+                with col1:
+                    if 'last_frame' in locals():
+                        st.image(last_frame, channels="BGR", use_container_width=True, 
+                                caption="Sample frame with pose analysis")
+                
+                with col2:
+                    # Offer video download
+                    if os.path.exists(output_path):
+                        file_size = os.path.getsize(output_path) / (1024 * 1024)  # MB
+                        st.metric("Output video size", f"{file_size:.1f} MB")
+                        
+                        with open(output_path, 'rb') as f:
+                            st.download_button(
+                                label="📥 Download Analyzed Video",
+                                data=f,
+                                file_name=f"handstand_analysis_{int(time.time())}.mp4",
+                                mime="video/mp4",
+                                use_container_width=True
+                            )
+                        
+                        st.info("💡 Download the video to watch it with all analyzed frames!")
+                    else:
+                        st.error("Output video not created")
+            
+            # Final cleanup
+            gc.collect()
+    
+    elif filetype == "image":
+        st.info("Processing image...")
+        
+        with mp_pose.Pose(
+            static_image_mode=True,
+            model_complexity=1,  # Medium model for images
+            enable_segmentation=False,  # Disable to save memory
+            min_detection_confidence=0.5) as pose:
+            
+            image = cv2.imread(input_file)
+            if image is None:
+                st.error("Could not read image file")
+                return
+            
+            # Process image
+            result = process_frame(
+                image, pose, mp_pose, mp_drawing,
+                drawing_spec, drawing_spec_points, rotate, text_color,
+                return_angles=True, use_wrist_shoulder_hip=use_wrist_shoulder_hip,
+                left_side_only=left_side_only
+            )
+            final_frame, angles = result
+            
+            if run_streamlit:
+                # Calculate scores
+                if angles:
+                    show_analysis(angles,left_side_only,use_wrist_shoulder_hip)
+                    
+                    
+                    
+                # Show image
+                st.subheader("📸 Analyzed Image")
+                stframe.image(final_frame, channels="BGR", use_container_width=True)
+                
+                # Offer download
+                output_path = '/tmp/output.jpg'
+                cv2.imwrite(output_path, final_frame)
+                with open(output_path, 'rb') as f:
+                    st.download_button(
+                        label="📥 Download Result",
+                        data=f,
+                        file_name="handstand_analysis.jpg",
+                        mime="image/jpeg"
+                    )
+            
+            gc.collect()
+    else:
+        st.error("ERROR in filetype")
+
+def check_streamlit():
+    """Function to check whether python code is run within streamlit"""
+    try:
+        from streamlit.runtime.scriptrunner import get_script_run_ctx
+        return get_script_run_ctx() is not None
+    except ModuleNotFoundError:
+        return False
+
+def right(s, amount):
+    return s[-amount:]
+
+def show_info():
+    # Show Cloud Run tips
+    st.subheader("ℹ️ How it works")
+    st.markdown("""
+    **This app analyzes your handstand form:**
+    1. Upload a video (MP4) or image (JPG)
+    2. AI detects your body pose
+    3. Calculates joint angles (shoulders, elbows, hips, knees)
+    4. Download the analyzed video with annotations
+    
+    **Cloud Run Optimizations:**
+    - ✅ Videos limited to 300 frames (~10 sec at 30fps)
+    - ✅ Processing every 2nd frame
+    - ✅ Reduced resolution for memory efficiency
+    - 💡 **Download the output video** to see all frames smoothly!
+    """)
+def main_():
+    run_streamlit = check_streamlit()
+    
+    if run_streamlit:
+        st.set_page_config(page_title="Handstand Analyzer", page_icon="🤸")
+        
+        st.header("🤸 Handstand Analyzer")
+        st.write("**Cloud Run Edition** - version 070226a")
+        
+       
+
+        detection_confidence = st.sidebar.number_input("Detection confidence", 0.0, 1.0, 0.5) 
+        tracking_confidence = st.sidebar.number_input("Tracking confidence", 0.0, 1.0, 0.5) 
+        rotate = st.sidebar.checkbox("Rotate 180°", False)
+        
+        col1,col2,col3= st.columns(3)
+        with col1:
+            # Shoulder angle calculation method
+            use_wrist_shoulder_hip = st.checkbox(
+                "Use wrist→shoulder→hip angle", 
+                value=USE_WRIST_SHOULDER_HIP,
+                help="Alternative shoulder angle: measures shoulder elevation/opening using wrist→shoulder→hip instead of hip→shoulder→elbow"
+            )
+        with col2:
+            # Side selection
+            left_side_only = st.checkbox(
+                "Analyze left side only",
+                value=USE_LEFT_SIDE_ONLY,
+                help="Only analyze and display left side angles (ignores right side)"
+            )
+        with col3:
+            text_color=st.selectbox("Tekstcolor",["black", "white"])
+          
+        # Processing mode
+        processing_mode = st.sidebar.radio(
+            "Processing mode",
+            ["🎬 Live Preview (slower)", "⚡ Batch Process (faster)"],
+            index=1
+        )
+        show_live = processing_mode.startswith("🎬")
+        
+        f = st.file_uploader("Upload file (mp4 or jpg)", ['mp4', "jpg", "jpeg"])
+        
+        if f is None:
+            st.info("👆 Please upload a video or image file")
+            st.stop()
+        
+        file_name = f.name
+        suffix = right(file_name, 3)
+        
+        # Save to /tmp for Cloud Run
+        temp_path = f'/tmp/upload_{int(time.time())}.{suffix}'
+        with open(temp_path, 'wb') as tf:
+            tf.write(f.read())
+        
+        input_file = temp_path
+        stframe = st.empty()
+        show_live = locals().get('show_live', True)
+    else:
+        detection_confidence = 0.5
+        tracking_confidence = 0.5
+        rotate = False
+        input_file = "test.mp4"
+        file_name = input_file
+        stframe = None
+    
+    output_file = None
+    
+    if right(file_name, 3) in ["mp4", "MP4"]:
+        filetype = "video"
+    elif right(file_name, 3) in ["jpg", "peg"]:  # jpg or jpeg
+        filetype = "image"
+    else:
+        if run_streamlit:
+            st.error(f"❌ Filetype not recognized: {file_name}")
+            st.stop()
+        else:
+            print(f"Filetype not recognized: {file_name}")
+            return
+    
+    try:
+        run(run_streamlit, stframe, filetype, input_file, output_file, 
+            detection_confidence, tracking_confidence, 0, rotate, text_color, 
+            show_live if run_streamlit else True,
+            use_wrist_shoulder_hip if run_streamlit else USE_WRIST_SHOULDER_HIP,
+            left_side_only if run_streamlit else USE_LEFT_SIDE_ONLY)
+    except Exception as e:
+        st.error(f"❌ Error during processing: {str(e)}")
+        st.exception(e)
+    finally:
+        # Cleanup temp files
+        if run_streamlit and os.path.exists(input_file):
+            try:
+                os.remove(input_file)
+            except:
+                pass
+
+def main():
+    tab1,tab2=st.tabs(["Main", "Info"])
+    with tab1:
+        main_()
+    with tab2:
+        show_info()
+
+if __name__ == '__main__':
+    main()
+
+                 
